@@ -1,7 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import QrReader from "react-qr-scanner";
+// import QrReader from "react-qr-scanner";
+
+const QrReader = dynamic(() => import("react-qr-scanner"), {
+  ssr: false, // Disable server-side rendering
+});
 
 
 interface QrData {
