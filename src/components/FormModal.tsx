@@ -103,7 +103,7 @@ const FormModal = ({
     | "leave"
     | "exeat"
 
-  type: "create" | "update" | "delete";
+  type: "create" | "update" | "delete" | "message";
   data?: any;
   id?: number;
 }) => {
