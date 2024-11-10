@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import dynamic from "next/dynamic";
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
@@ -65,21 +65,21 @@ const ExeatForm = dynamic(() => import("./forms/ExeatForm"), {
 
 
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+  [key: string]: (setOpen:Dispatch<SetStateAction<boolean>>, type: "create" | "update", data?: any) => JSX.Element;
 } = {
-  teacher: (type, data) => <TeacherForm type={type} data={data} />,
-  student: (type, data) => <StudentForm type={type} data={data} />,
-  parent: (type, data) => <ParentForm type={type} data={data} />,
-  class: (type, data) => <ClassForm type={type} data={data} />,
-  subject: (type, data) => <SubjectForm type={type} data={data} />,
-  lesson: (type, data) => <LessonForm type={type} data={data} />,
-  exam: (type, data) => <ExamForm type={type} data={data} />,
-  assignment: (type, data) => <AssignmentForm type={type} data={data} />,
-  result: (type, data) => <ResultForm type={type} data={data} />,
-  event: (type, data) => <EventForm type={type} data={data} />,
-  announcement: (type, data) => <AnnouncementForm type={type} data={data} />,
-  leave: (type, data) => <LeaveForm type={type} data={data} />,
-  exeat: (type, data) => <ExeatForm type={type} data={data} />,
+  teacher: (setOpen, type, data) => <TeacherForm type={type} data={data} setOpen={setOpen} />,
+  student: (setOpen, type, data) => <StudentForm type={type} data={data} setOpen={setOpen} />,
+  parent: (setOpen, type, data) => <ParentForm type={type} data={data} setOpen={setOpen} />,
+  class: (setOpen, type, data) => <ClassForm type={type} data={data} setOpen={setOpen} />,
+  subject: (setOpen, type, data) => <SubjectForm type={type} data={data} setOpen={setOpen} />,
+  lesson: (setOpen, type, data) => <LessonForm type={type} data={data} setOpen={setOpen} />,
+  exam: (setOpen, type, data) => <ExamForm type={type} data={data} setOpen={setOpen} />,
+  assignment: (setOpen, type, data) => <AssignmentForm type={type} data={data} setOpen={setOpen} />,
+  result: (setOpen, type, data) => <ResultForm type={type} data={data} setOpen={setOpen} />,
+  event: (setOpen, type, data) => <EventForm type={type} data={data} setOpen={setOpen} />,
+  announcement: (setOpen, type, data) => <AnnouncementForm type={type} data={data} setOpen={setOpen} />,
+  leave: (setOpen, type, data) => <LeaveForm type={type} data={data} setOpen={setOpen} />,
+  exeat: (setOpen, type, data) => <ExeatForm type={type} data={data} setOpen={setOpen} />,
 };
 const FormModal = ({
   table,
@@ -103,9 +103,9 @@ const FormModal = ({
     | "leave"
     | "exeat"
 
-  type: "create" | "update" | "delete" | "message";
+  type: "create" | "update" | "delete" | "message" | "view";
   data?: any;
-  id?: number;
+  id?: number | string;
 }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
@@ -127,7 +127,7 @@ const FormModal = ({
         </button>
       </form>
     ) : type==="create" || type === "update" ? (
-      forms[table](type, data)
+      forms[table](setOpen, type, data)
     ) : "form not found";
   };
 

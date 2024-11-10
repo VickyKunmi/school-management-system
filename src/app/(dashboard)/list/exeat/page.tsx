@@ -3,6 +3,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import { examsData, exeatRequestData, leaveRequestData, role } from "@/lib/data";
+import { auth } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,37 +15,45 @@ type Exeat = {
   status: string;
   type: string;
 };
-const columns = [
-  {
-    header: "Applied Date",
-    accessor: "appliedDate",
-  },
-  {
-    header: "Start Date",
-    accessor: "End Date",
-  },
-  {
-    header: "End Date",
-    accessor: "endDate",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: " Exeat Type",
-    accessor: "type",
-    className: "hidden md:table-cell",
-  },
-  {
-    header: "Status",
-    accessor: "status",
-  },
-
-  {
-    header: "Actions",
-    accessor: "action",
-  },
-];
-
-const ExeatList = () => {
+const ExeatList = async ({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) => {
+  const authObject = await auth();
+  const { sessionClaims } = authObject;
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  
+  const columns = [
+    {
+      header: "Applied Date",
+      accessor: "appliedDate",
+    },
+    {
+      header: "Start Date",
+      accessor: "End Date",
+    },
+    {
+      header: "End Date",
+      accessor: "endDate",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: " Exeat Type",
+      accessor: "type",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Status",
+      accessor: "status",
+    },
+  
+    {
+      header: "Actions",
+      accessor: "action",
+    },
+  ];
+  
   const renderRow = (item: Exeat) => (
     <tr
       key={item.id}
@@ -55,7 +64,7 @@ const ExeatList = () => {
       <td className="hidden md:table-cell">{item.endDate}</td>
       <td className="hidden md:table-cell">{item.type}</td>
       <td className="hidden md:table-cell">{item.status}</td>
-
+  
       <td>
         <div className="flex items-center gap-2">
           <Link href={`/list/teacher/${item.id}`}></Link>
@@ -73,6 +82,13 @@ const ExeatList = () => {
       </td>
     </tr>
   );
+
+
+  const { page, ...queryParams } = searchParams;
+
+  const p = page ? parseInt(page) : 1;
+
+
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -98,7 +114,7 @@ const ExeatList = () => {
       {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={exeatRequestData} />
       {/* PAGINATION */}
-      <Pagination />
+      {/* <Pagination page={p} count={} /> */}
     </div>
   );
 };

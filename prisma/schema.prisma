@@ -85,7 +85,7 @@ model Class {
   supervisorId  String?
   supervisor    Teacher?        @relation(fields: [supervisorId], references: [id])
   lessons       Lesson[]
-  student       Student[]
+  students       Student[]
   gradeId       Int
   grade         Grade          @relation(fields: [gradeId], references: [id])
   events        Event[]
@@ -163,10 +163,10 @@ model Event {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  startDate   DateTime
-  endtDate    DateTime
+  startTime   DateTime
+  endTime     DateTime
 
-  classId Int
+  classId Int?
   class   Class? @relation(fields: [classId], references: [id])
 }
 
@@ -176,7 +176,7 @@ model Announcement {
   description String
   date        DateTime
 
-  classId Int
+  classId Int?
   class   Class? @relation(fields: [classId], references: [id])
 }
 

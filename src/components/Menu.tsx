@@ -1,4 +1,6 @@
-import { role } from "@/lib/data";
+
+
+import { currentUser } from "@clerk/nextjs/server";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -89,9 +91,8 @@ const menuItems = [
         icon: "/attendance.png",
         label: "Exeat",
         href: "/list/exeat",
-        visible: ["teacher", "admin", "student", "parent"],
+        visible: ["admin", "student"],
       },
-
 
       {
         icon: "/calendar.png",
@@ -138,7 +139,13 @@ const menuItems = [
   },
 ];
 
-const Menu = () => {
+const Menu = async () => {
+  const user = await currentUser();
+  
+  const role = user?.publicMetadata.role as string;
+ 
+
+
   return (
     <div className="mt-4 text-sm ">
       {menuItems.map((i) => (
@@ -147,19 +154,19 @@ const Menu = () => {
             {i.title}
           </span>
           {i.items.map((item) => {
-              if(item.visible.includes(role)){
-                return (
-                  <Link
-              href={item.href}
-              key={item.label}
-              className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-yellow"
-            >
-              <Image src={item.icon} width={20} height={20} alt="" />
-              <span className="hidden lg:block">{item.label}</span>
-            </Link>
-                )
-              }
-})}
+            if (item.visible.includes(role)) {
+              return (
+                <Link
+                  href={item.href}
+                  key={item.label}
+                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-yellow"
+                >
+                  <Image src={item.icon} width={20} height={20} alt="" />
+                  <span className="hidden lg:block">{item.label}</span>
+                </Link>
+              );
+            }
+          })}
         </div>
       ))}
     </div>

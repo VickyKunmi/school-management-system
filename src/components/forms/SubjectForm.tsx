@@ -2,81 +2,70 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import InputField from "../InputField";
-import Image from "next/image";
-
-const schema = z.object({
-  name: z
-    .string()
-    .min(5, { message: "Subject name must be at least 5 characters long" })
-    .max(20, {
-      message: "Subject name must not be more than 20 characters long",
-    }),
-  teachers: z.string().min(3, { message: "At least 3 charcters long!" }),
-  lessons: z.string().min(3, { message: "At least 3 charcters long!" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+import { subjectSchema, SubjectSchema } from "@/lib/formValidationSchema";
+import { createSubject } from "@/lib/actions";
+import { useFormState } from "react-dom";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const SubjectForm = ({
   type,
   data,
+  setOpen
 }: {
   type: "create" | "update";
   data?: any;
+  setOpen: Dispatch<SetStateAction<boolean>>
 }) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+  } = useForm<SubjectSchema>({
+    resolver: zodResolver(subjectSchema),
+  });
+
+  const [state, formAction] = useFormState(createSubject, {
+    success: false,
+    error: false,
   });
 
   const onSubmit = handleSubmit((data) => {
-    console.log("create");
+    // console.log("create: ", data);
+    formAction(data);
   });
+
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      toast(`Subject has been ${type === "create" ? "created" : "updated"}`);
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, type, router, setOpen]);
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Create a new Subject</h1>
-      {/* <span className="text-xs text-gray-400 font-medium">
-        Authentication Info
-      </span> */}
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Create a new subject" : "update the subject"}
+      </h1>
+
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Name"
+          label="Subject name"
           name="name"
           defaultValue={data?.name}
           register={register}
           error={errors?.name}
         />
       </div>
-
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="Lesson"
-          name="lesson"
-          type="lesson"
-          defaultValue={data?.lessons}
-          register={register}
-          error={errors?.lessons}
-        />
-      </div>
-
-      {/* <span className="text-xs text-gray-400 font-medium">Personal Info</span> */}
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="Teacher"
-          name="teacher"
-          // type="email"
-          defaultValue={data?.teachers}
-          register={register}
-          error={errors?.teachers}
-        />
-      </div>
-
+      {state.error && (
+        <span className="text-red-500">Something went wrong!</span>
+      )}
       <button className="bg-deepGreen text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}{" "}
       </button>

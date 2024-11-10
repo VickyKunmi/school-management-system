@@ -191,8 +191,8 @@ async function main() {
       data: {
         title: `Event ${i}`, 
         description: `Description for Event ${i}`, 
-        startDate: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        endtDate: new Date(new Date().setHours(new Date().getHours() + 2)), 
+        startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
+        endTime: new Date(new Date().setHours(new Date().getHours() + 2)), 
         classId: (i % 5) + 1, 
       },
     });
