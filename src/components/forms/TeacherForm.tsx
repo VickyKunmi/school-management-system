@@ -49,15 +49,6 @@ const TeacherForm = ({
 
 
 
-  // const onSubmit = handleSubmit((data) => {
-  //   console.log("Image URL:", img?.secure_url);  // Log the image URL here
-  //   if (!img?.secure_url) {
-  //     toast.error("Please upload an image");
-  //     return;
-  //   }
-  //   console.log("Form data being submitted:", { ...data, img: img.secure_url });
-  //   formAction({ ...data, img: img?.secure_url });
-  // });
   
   
 
@@ -200,15 +191,11 @@ const TeacherForm = ({
         </div>
         <CldUploadWidget
           uploadPreset="schoolManagementSystem"
-          // onSuccess={(result, { widget }) => {
-          //   setImg(result.info);
-          //   widget.close();
-          // }}
           onSuccess={(result, { widget }) => {
-            console.log('Image uploaded:', result.info);  // Log the image upload response
             setImg(result.info);
             widget.close();
           }}
+          
         >
           {({ open }) => {
             return (
