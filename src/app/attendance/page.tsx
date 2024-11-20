@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Html5Qrcode, CameraDevice, Html5QrcodeResult } from "html5-qrcode";
+import { SignOutButton, UserButton } from "@clerk/nextjs";
+import {FaSignOutAlt} from "react-icons/fa"
+import {AiOutlineLogout} from "react-icons/ai"
+
 
 const Attendance = () => {
   const [scanner, setScanner] = useState<Html5Qrcode | null>(null);
@@ -63,61 +67,79 @@ const Attendance = () => {
   };
 
   return (
-    <div className="bg-yellow min-h-screen flex items-center justify-center p-5">
-      <div className="bg-white shadow-lg rounded-lg p-6 max-w-xl w-full">
-        <h1 className="text-2xl font-bold text-center mb-8">
-          Teacher Attendance QR Code Scanner
-        </h1>
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="flex flex-col">
-            <label className="text-lg font-semibold mb-2">Date</label>
-            <input type="date" className="border border-gray-300 p-2 rounded" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-lg font-semibold mb-2">Start Time</label>
-            <input type="time" className="border border-gray-300 p-2 rounded" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-lg font-semibold mb-2">End Time</label>
-            <input type="time" className="border border-gray-300 p-2 rounded" />
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-center gap-4 mb-4">
-          {devices.length > 0 && (
-            <select
-              onChange={(e) => setSelectedDeviceId(e.target.value)}
-              className="border border-gray-300 p-2 rounded w-full lg:w-auto"
-            >
-              {devices.map((device, index) => (
-                <option key={index} value={device.id}>
-                  {device.label || `Camera ${index + 1}`}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            onClick={startScanner}
-            className="bg-deepGreen text-white px-4 py-2 rounded-lg w-full lg:w-auto"
-          >
-            Start Scanning
+    <>
+      <div className="bg-yellow min-h-screen flex items-center justify-center p-5 relative">
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
+        <SignOutButton>
+          <button className="bg-white text-deepGreen  p-2 rounded-full">
+            <AiOutlineLogout className="w-8 h-8" /> 
           </button>
+        </SignOutButton>
         </div>
-
-        <div
-          id="reader"
-          className="w-full h-64 border border-gray-300 rounded-lg mb-4 overflow-hidden"
-          style={{ maxHeight: "300px" }}
-        />
-
-        {result && (
-          <div className="bg-green-100 p-4 rounded-lg text-green-800">
-            <h3 className="font-semibold">Scanned QR Code:</h3>
-            <p>{result}</p>
+        <div className="bg-white shadow-lg rounded-lg p-6 max-w-xl w-full">
+          <h1 className="text-2xl font-bold text-center mb-8">
+            Teacher Attendance QR Code Scanner
+          </h1>
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="flex flex-col">
+              <label className="text-lg font-semibold mb-2">Date</label>
+              <input
+                type="date"
+                className="border border-gray-300 p-2 rounded"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-lg font-semibold mb-2">Start Time</label>
+              <input
+                type="time"
+                className="border border-gray-300 p-2 rounded"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-lg font-semibold mb-2">End Time</label>
+              <input
+                type="time"
+                className="border border-gray-300 p-2 rounded"
+              />
+            </div>
           </div>
-        )}
+
+          <div className="flex flex-col lg:flex-row items-center gap-4 mb-4">
+            {devices.length > 0 && (
+              <select
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                className="border border-gray-300 p-2 rounded w-full lg:w-auto"
+              >
+                {devices.map((device, index) => (
+                  <option key={index} value={device.id}>
+                    {device.label || `Camera ${index + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={startScanner}
+              className="bg-deepGreen text-white px-4 py-2 rounded-lg w-full lg:w-auto"
+            >
+              Start Scanning
+            </button>
+          </div>
+
+          <div
+            id="reader"
+            className="w-full h-64 border border-gray-300 rounded-lg mb-4 overflow-hidden"
+            style={{ maxHeight: "300px" }}
+          />
+
+          {result && (
+            <div className="bg-green-100 p-4 rounded-lg text-green-800">
+              <h3 className="font-semibold">Scanned QR Code:</h3>
+              <p>{result}</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

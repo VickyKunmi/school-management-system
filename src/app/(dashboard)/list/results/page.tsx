@@ -12,10 +12,10 @@ type ResultLists = {
   id: number;
   title: string;
   studentFirstName: string;
-  studentMiddleName: string;
+  
   studentLastName: string;
   teacherFirstName: string;
-  teacherMiddleName: string;
+
   teacherLastName: string;
   score: number;
   classname: string;
@@ -82,16 +82,14 @@ const ResultList = async ({
       <td>
         {item.studentFirstName +
           " " +
-          item.studentMiddleName +
-          " " +
+         
           item.studentLastName}
       </td>
       <td className="hidden md:table-cell">{item.score}</td>
       <td className="hidden md:table-cell">
         {item.teacherFirstName +
           " " +
-          item.teacherMiddleName +
-          " " +
+         
           item.teacherLastName}
       </td>
       <td className="hidden md:table-cell">{item.classname}</td>
@@ -136,7 +134,7 @@ const ResultList = async ({
               {
                 student: {
                   firstName: { contains: value, mode: "insensitive" },
-                  middleName: { contains: value, mode: "insensitive" },
+                  
                   lastName: { contains: value, mode: "insensitive" },
                 },
               },
@@ -178,7 +176,7 @@ const ResultList = async ({
       where: query,
       include: {
         student: {
-          select: { firstName: true, middleName: true, lastName: true },
+          select: { firstName: true,  lastName: true },
         },
         exam: {
           include: {
@@ -186,7 +184,7 @@ const ResultList = async ({
               select: {
                 class: { select: { name: true } },
                 teacher: {
-                  select: { firstName: true, middleName: true, lastName: true },
+                  select: { firstName: true,  lastName: true },
                 },
               },
             },
@@ -199,7 +197,7 @@ const ResultList = async ({
               select: {
                 class: { select: { name: true } },
                 teacher: {
-                  select: { firstName: true, middleName: true, lastName: true },
+                  select: { firstName: true,  lastName: true },
                 },
               },
             },
@@ -225,10 +223,9 @@ const ResultList = async ({
       id: item.id,
       title: assessment.title,
       studentFirstName: item.student.firstName,
-      studentMiddleName: item.student.middleName,
       studentLastName: item.student.lastName,
+
       teacherFirstName: assessment.lesson.teacher.firstName,
-      teacherMiddleName: assessment.lesson.teacher.middleName,
       teacherLastName: assessment.lesson.teacher.lastName,
       score: item.score,
       classname: assessment.lesson.class.name,

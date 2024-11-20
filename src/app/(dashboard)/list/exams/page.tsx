@@ -58,40 +58,7 @@ const ExamList = async ({
       : []),
   ];
 
-  // const renderRow = (item: ExamLists) => (
-  //   <tr
-  //     key={item.id}
-  //     className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  //   >
-  //     <td className="flex items-center gap-4 p-4">
-  //       {item.lesson.subject.name}
-  //     </td>
-  //     <td>{item.lesson.class.name}</td>
-  //     <td className="hidden md:table-cell">
-  //       {item.lesson.teacher.firstName +
-  //         " " +
-  //         item.lesson.teacher.middleName +
-  //         " " +
-  //         item.lesson.teacher.lastName}
-  //     </td>
-  //     <td className="hidden md:table-cell">
-  //       {new Intl.DateTimeFormat("en-GH").format(item.startTime)}
-  //     </td>
-  //     <td>
-  //       <div className="flex items-center gap-2">
-  //         <Link href={`/list/teacher/${item.id}`}></Link>
-  //         {role === "admin" && (
-  //           <>
-  //             <FormModal type="update" table="exam" data={item} />
-  //             <FormModal type="delete" table="exam" id={item.id} />
-  //           </>
-  //         )}
-  //       </div>
-  //     </td>
-  //   </tr>
-  // );
-
-
+  
   const renderRow = (item: ExamLists) => (
     <tr
       key={item.id}
@@ -102,7 +69,7 @@ const ExamList = async ({
       </td>
       <td>{item.lesson.class.name}</td>
       <td className="hidden md:table-cell">
-        {`${item.lesson.teacher.firstName} ${item.lesson.teacher.middleName} ${item.lesson.teacher.lastName}`}
+        {`${item.lesson.teacher.firstName} ${item.lesson.teacher.lastName}`}
       </td>
       <td className="hidden md:table-cell">
         {new Intl.DateTimeFormat("en-GH").format(item.startTime)}
@@ -197,7 +164,7 @@ const ExamList = async ({
           select: {
             subject: { select: { name: true } },
             teacher: {
-              select: { firstName: true, middleName: true, lastName: true },
+              select: { firstName: true, lastName: true },
             },
             class: { select: { name: true } },
           },

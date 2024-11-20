@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -9,7 +9,6 @@ import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-
 type TeacherLists = Teacher & { subjects: Subject[] } & { classes: Class[] };
 
 const TeacherList = async ({
@@ -17,8 +16,7 @@ const TeacherList = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const authObject = await auth();
-  const { sessionClaims } = authObject;
+  const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
   const columns = [
@@ -76,9 +74,9 @@ const TeacherList = async ({
           className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
         />
         <div className="flex flex-col">
-          <h3 className="font-semibold">{`${item.firstName} ${
-            item.middleName ? item.middleName + " " : ""
-          }${item.lastName}`}</h3>
+          <h3 className="font-semibold">
+            {item.firstName + " " + item.lastName}
+          </h3>
           <p className="text-xs text-gray-500">{item?.email} </p>
         </div>
       </td>
@@ -102,8 +100,8 @@ const TeacherList = async ({
           {role === "admin" && (
             <>
               {/* one is for edit and one for delete */}
-              <FormModal type="delete" table="teacher" id={item.id} />
-              <FormModal type="delete" table="teacher" id={item.id} />
+              {/* <FormContainer type="delete" table="teacher" id={item.id} /> */}
+              <FormContainer type="delete" table="teacher" id={item.id} />
             </>
           )}
         </div>
@@ -135,7 +133,7 @@ const TeacherList = async ({
           case "search": {
             query.OR = [
               { firstName: { contains: value, mode: "insensitive" } },
-              { middleName: { contains: value, mode: "insensitive" } },
+              
               { lastName: { contains: value, mode: "insensitive" } },
             ];
             break;
@@ -176,7 +174,9 @@ const TeacherList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal table="teacher" type="create" />}
+            {role === "admin" && (
+              <FormContainer table="teacher" type="create" />
+            )}
           </div>
         </div>
       </div>

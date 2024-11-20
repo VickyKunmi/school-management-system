@@ -55,9 +55,7 @@ const LessonList = async ({
       <td className="flex items-center gap-4 p-4">{item.subject.name}</td>
       <td>{item.class.name}</td>
       <td className="hidden md:table-cell">
-        {`${item.teacher.firstName} ${
-          item.teacher.middleName ? item.teacher.middleName + " " : ""
-        } ${item.teacher.lastName}`}
+        {`${item.teacher.firstName} ${item.teacher.lastName}`}
       </td>
   
       <td>
@@ -100,7 +98,7 @@ const LessonList = async ({
             query.OR = [
               {subject: {name: { contains: value, mode: "insensitive" }}},
               {teacher: {firstName: { contains: value, mode: "insensitive" }}},
-              {teacher: {middleName: { contains: value, mode: "insensitive" }}},
+              
               {teacher: {lastName: { contains: value, mode: "insensitive" }}},
               
             ]
@@ -121,7 +119,7 @@ const LessonList = async ({
         subject: { select: { name: true } },
         class: { select: { name: true } },
         teacher: {
-          select: { firstName: true, lastName: true, middleName: true },
+          select: { firstName: true, lastName: true},
         },
       },
       take: ITEM_PER_PAGE,

@@ -70,8 +70,7 @@ const AssignmnetList = async ({
       <td className="hidden md:table-cell">
         {item.lesson.teacher.firstName +
           " " +
-          item.lesson.teacher.middleName +
-          " " +
+         
           item.lesson.teacher.lastName}
       </td>
       <td className="hidden md:table-cell">
@@ -122,7 +121,7 @@ const AssignmnetList = async ({
               subject: { name: { contains: value, mode: "insensitive" } },
               teacher: {
                 firstName: { contains: value, mode: "insensitive" },
-                middleName: { contains: value, mode: "insensitive" },
+                
                 lastName: { contains: value, mode: "insensitive" },
               },
             };
@@ -174,7 +173,7 @@ const AssignmnetList = async ({
           select: {
             subject: { select: { name: true } },
             teacher: {
-              select: { firstName: true, middleName: true, lastName: true },
+              select: { firstName: true, lastName: true },
             },
             class: { select: { name: true } },
           },

@@ -15,17 +15,30 @@ const LoginPage = () => {
   
   
   
-  useEffect(() => {
-    const role = user?.publicMetadata.role;
-    console.log("role", role)
-    console.log("role path", `/${role}`)
+  // useEffect(() => {
+  //   const role = user?.publicMetadata.role;
+  //   console.log("role", role)
+  //   console.log("role path", `/${role}`)
 
-    if(role) {
-      router.push(`/${role}`)
-    }
-  }, [user, router])
+  //   if(role) {
+  //     router.push(`/${role}`)
+  //   }
+  // }, [user, router])
   
 
+
+  useEffect(() => {
+    // Make sure user is loaded before accessing role
+    if (isLoaded && user) {
+      const role = user.publicMetadata.role;
+      console.log("role", role);
+      console.log("role path", `/${role}`);
+
+      if (role) {
+        router.push(`/${role}`);
+      }
+    }
+  }, [isLoaded, user, router]);
 
 
  

@@ -18,10 +18,7 @@ const schema = z.object({
     .min(8, { message: "Password ahould be at least 8 character long" }),
   firstName: z.string().min(3, { message: "First name is required" }),
   lastName: z.string().min(3, { message: "Last name is required" }),
-  middleName: z
-    .string()
-    .min(3, { message: "At least 3 charcters long!" })
-    .optional(),
+ 
   phone: z
     .string()
     .min(10, { message: "Phone number should be 10 digits!" })
@@ -38,11 +35,13 @@ type Inputs = z.infer<typeof schema>;
 const LeaveForm = ({
   type,
   data,
-  setOpen
+  setOpen,
+  relatedData
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  relatedData?:any;
 }) => {
   const {
     register,

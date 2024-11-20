@@ -1,4 +1,5 @@
-import FormModal from "@/components/FormModal";
+// import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -7,7 +8,6 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 import { Class, Prisma, Teacher } from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
 
 type ClassLists = Class & { supervisor: Teacher };
 const ClassesList = async ({
@@ -15,8 +15,7 @@ const ClassesList = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const authObject = await auth();
-  const { sessionClaims } = authObject;
+  const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
 
   const columns = [
@@ -58,17 +57,16 @@ const ClassesList = async ({
       <td className="flex items-center gap-4 p-4">{item.name}</td>
       <td className="hidden md:table-cell">{item.capacity}</td>
       <td className="hidden md:table-cell">{item.name[0]}</td>
-      <td className="hidden md:table-cell">{`${item.supervisor.firstName} ${
-        item.supervisor.middleName ? item.supervisor.middleName + " " : ""
-      } ${item.supervisor.lastName}`}</td>
+      <td className="hidden md:table-cell">
+        {item.supervisor.firstName + " " + item.supervisor.lastName}
+      </td>
 
       <td>
         <div className="flex items-center gap-2">
-          <Link href={`/list/teacher/${item.id}`}></Link>
           {role === "admin" && (
             <>
-              <FormModal type="update" table="class" data={item} />
-              <FormModal type="delete" table="class" id={item.id} />
+              <FormContainer type="update" table="class" data={item} />
+              <FormContainer type="delete" table="class" id={item.id} />
             </>
           )}
         </div>
@@ -133,7 +131,7 @@ const ClassesList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal type="create" table="class" />}
+            {role === "admin" && <FormContainer type="create" table="class" />}
           </div>
         </div>
       </div>

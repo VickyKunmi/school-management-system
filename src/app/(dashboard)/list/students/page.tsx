@@ -68,7 +68,7 @@ const StudentList = async ({
         />
         <div className="flex flex-col">
           <h3 className="font-semibold">
-            {`${item.firstName} ${item.middleName ? item.middleName + " " : ""}${
+            {`${item.firstName}  ${
               item.lastName
             }`}
           </h3>
@@ -123,7 +123,7 @@ const StudentList = async ({
           case "search": {
             query.OR = [
               { firstName: { contains: value, mode: "insensitive" } },
-              { middleName: { contains: value, mode: "insensitive" } },
+             
               { lastName: { contains: value, mode: "insensitive" } },
             ];
             break;

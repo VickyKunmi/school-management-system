@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -7,7 +7,6 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 import { Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
 
 type SubjectLists = Subject & { teachers: Teacher[] };
 
@@ -45,22 +44,18 @@ const SubjectList = async ({
         {item.teachers
           .map(
             (teacher) =>
-              `${teacher.firstName} ${
-                teacher.middleName ? teacher.middleName.charAt(0) + ". " : ""
-              }${teacher.lastName}`
+              `${teacher.firstName}
+               ${teacher.lastName}`
           )
           .join(", ")}
       </td>
 
       <td>
         <div className="flex items-center gap-2">
-          <Link href={`/list/teacher/${item.id}`}>
-            <FormModal type="view" table="parent" data={item} />
-          </Link>
           {role === "admin" && (
             <>
-              <FormModal type="update" table="subject" data={item} />
-              <FormModal type="delete" table="subject" id={item.id} />
+              <FormContainer type="update" table="subject" data={item} />
+              <FormContainer type="delete" table="subject" id={item.id} />
             </>
           )}
         </div>
@@ -83,6 +78,8 @@ const SubjectList = async ({
           case "search":
             query.name = { contains: value, mode: "insensitive" };
 
+            break;
+          default:
             break;
         }
       }
@@ -117,7 +114,9 @@ const SubjectList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal type="create" table="subject" />}
+            {role === "admin" && (
+              <FormContainer type="create" table="subject" />
+            )}
           </div>
         </div>
       </div>

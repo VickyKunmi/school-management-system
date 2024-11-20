@@ -11,6 +11,7 @@ type RouteAccessMap = {
     "/student(.*)": ["student"],
     "/teacher(.*)": ["teacher"],
     "/parent(.*)": ["parent"],
+    "/attendance(.*)": ["attendance"],
     "/list/teachers": ["admin", "teacher"],
     "/list/students": ["admin", "teacher"],
     "/list/parents": ["admin", "teacher"],

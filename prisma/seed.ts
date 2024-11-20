@@ -62,7 +62,6 @@ async function main() {
         username: `teacher${i}`,
         firstName: `TName${i}`,
         lastName: `TLastName${i}`,
-        middleName: `TMiddleName${i}`,
         email: `teacher${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
@@ -103,7 +102,7 @@ async function main() {
         username: `parentId${i}`,
         firstName: `PName ${i}`,
         lastName: `PLastName ${i}`,
-        middleName: `PMiddleName ${i}`,
+        
         email: `parent${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
@@ -123,7 +122,7 @@ async function main() {
         username: `student${i}`, 
         firstName: `PName ${i}`,
         lastName: `PLastName ${i}`,
-        middleName: `PMiddleName ${i}`,
+        
         email: `student${i}@example.com`,
         phone: `987-654-321${i}`,
         address: `Address${i}`,

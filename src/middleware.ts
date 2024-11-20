@@ -13,8 +13,8 @@ const matchers = Object.keys(routeAccessMap).map((route) => ({
 
 export default clerkMiddleware(async(auth, req) => {
 //   if (isProtectedRoute(req)) await auth.protect()
-const authObject = await auth();
-   const {sessionClaims} = authObject;
+// const authObject = await auth();
+   const {sessionClaims} = auth();
 
    const role = (sessionClaims?.metadata as {role?: string})?.role;
    for (const {matcher, allowedRoles} of matchers) {

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../InputField";
 import { subjectSchema, SubjectSchema } from "@/lib/formValidationSchema";
-import { createSubject } from "@/lib/actions";
+import { createSubject, updateSubject } from "@/lib/actions";
 import { useFormState } from "react-dom";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { toast } from "react-toastify";
@@ -13,11 +13,13 @@ import { useRouter } from "next/navigation";
 const SubjectForm = ({
   type,
   data,
-  setOpen
+  setOpen,
+  relatedData,
 }: {
   type: "create" | "update";
   data?: any;
-  setOpen: Dispatch<SetStateAction<boolean>>
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  relatedData?: any;
 }) => {
   const {
     register,
@@ -27,16 +29,18 @@ const SubjectForm = ({
     resolver: zodResolver(subjectSchema),
   });
 
-  const [state, formAction] = useFormState(createSubject, {
-    success: false,
-    error: false,
-  });
+  const [state, formAction] = useFormState(
+    type === "create" ? createSubject : updateSubject,
+    {
+      success: false,
+      error: false,
+    }
+  );
 
   const onSubmit = handleSubmit((data) => {
     // console.log("create: ", data);
     formAction(data);
   });
-
 
   const router = useRouter();
 
@@ -47,6 +51,9 @@ const SubjectForm = ({
       router.refresh();
     }
   }, [state, type, router, setOpen]);
+
+  // const { teachers } = relatedData;
+  const { teachers } = relatedData;
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -62,12 +69,52 @@ const SubjectForm = ({
           register={register}
           error={errors?.name}
         />
+
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
+
+        <div className="flex flex-col gap-2 w-full md:w-2/3">
+          <label className="text-sm text-gray-500">Teachers</label>
+          <select
+            multiple
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("teachers")}
+            defaultValue={data?.teachers}
+          >
+            {teachers.map(
+              (teacher: {
+                id: string;
+                firstName: string;
+
+                lastName: string;
+              }) => (
+                <option value={teacher.id} key={teacher.id}>
+                  {" "}
+                  {teacher.firstName + " " + teacher.lastName}{" "}
+                </option>
+              )
+            )}
+          </select>
+          {errors.teachers?.message && (
+            <p className="text-xs text-red-400">
+              {errors.teachers.message.toString()}
+            </p>
+          )}
+        </div>
       </div>
       {state.error && (
         <span className="text-red-500">Something went wrong!</span>
       )}
       <button className="bg-deepGreen text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}{" "}
+        {type === "create" ? "Create" : "Update"}
       </button>
     </form>
   );

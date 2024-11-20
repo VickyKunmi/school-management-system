@@ -66,9 +66,7 @@ const ParentList = async ({
         />
         <div className="flex flex-col">
           <h3 className="font-semibold">
-            {`${item.firstName} ${
-              item.middleName ? item.middleName + " " : ""
-            }${item.lastName}`}{" "}
+            {`${item.firstName} ${item.lastName}`}{" "}
           </h3>
           <p className="text-xs text-gray-500">{item?.email} </p>
         </div>
@@ -78,9 +76,7 @@ const ParentList = async ({
         {item.students
           .map(
             (student) =>
-              `${student.firstName} ${
-                student.middleName ? student.middleName.charAt(0) + ". " : ""
-              }${student.lastName}`
+              `${student.firstName} ${student.lastName}`
           )
           .join(", ")}
       </td>
@@ -114,7 +110,7 @@ const ParentList = async ({
           case "search": {
             query.OR = [
               { firstName: { contains: value, mode: "insensitive" } },
-              { middleName: { contains: value, mode: "insensitive" } },
+              
               { lastName: { contains: value, mode: "insensitive" } },
             ];
             break;

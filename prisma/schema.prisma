@@ -17,7 +17,7 @@ model Student {
   username   String       @unique
   firstName  String
   lastName   String
-  middleName String?
+  
   email      String?      @unique
   phone      String?      @unique
   address    String
@@ -41,7 +41,7 @@ model Teacher {
   username   String    @unique
   firstName  String
   lastName   String
-  middleName String?
+  
   email      String    @unique
   phone      String    @unique
   address    String
@@ -60,7 +60,7 @@ model Parent {
   username   String    @unique
   firstName  String
   lastName   String
-  middleName String?
+  
   email      String? @unique
   phone      String @unique
   address    String
