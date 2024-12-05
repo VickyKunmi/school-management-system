@@ -95,15 +95,12 @@ const AnnouncementList = async ({
     }
   }
 
-
-   // Role conditions for teacher, student, or parent
-   const roleConditions = {
+  // Role conditions for teacher, student, or parent
+  const roleConditions = {
     teacher: { lessons: { some: { teacherId: currentUserId! } } },
     student: { students: { some: { id: currentUserId! } } },
     parent: { students: { some: { parentId: currentUserId! } } },
   };
-  
-
 
   query.OR = [
     { classId: null },
@@ -111,9 +108,6 @@ const AnnouncementList = async ({
       class: roleConditions[role as keyof typeof roleConditions] || {},
     },
   ];
-  
-
-
 
   const [data, count] = await prisma.$transaction([
     prisma.announcement.findMany({

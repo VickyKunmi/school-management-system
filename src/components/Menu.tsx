@@ -72,14 +72,14 @@ const menuItems = [
         icon: "/attendance.png",
         label: "Attendance",
         href: "/list/attendance",
-        visible: ["admin", "teacher", "student", "parent"],
+        visible: ["admin", "teacher"],
       },
-      {
-        icon: "/attendance.png",
-        label: "QR code",
-        href: "/teacher/qrCode",
-        visible: ["teacher"],
-      },
+      // {
+      //   icon: "/attendance.png",
+      //   label: "QR code",
+      //   href: "/teacher/qrCode",
+      //   visible: ["teacher"],
+      // },
       {
         icon: "/attendance.png",
         label: "Leave Request",
@@ -146,7 +146,9 @@ const Menu = async () => {
   
   const role = user?.publicMetadata.role as string;
  
-
+  // console.log("User:", user);
+  // console.log("Role:", role);
+  
 
   return (
     <div className="mt-4 text-sm ">
@@ -156,7 +158,8 @@ const Menu = async () => {
             {i.title}
           </span>
           {i.items.map((item) => {
-            if (item.visible.includes(role)) {
+            // console.log("Role:", role, "Visible roles:", item.visible);
+            if (item.visible.includes(role) && item.href) {
               return (
                 <Link
                   href={item.href}

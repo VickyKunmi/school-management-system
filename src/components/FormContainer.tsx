@@ -29,7 +29,7 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 
   const { userId, sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const currentUserId = userId;
+  const currentUserId = userId as string;
 
   if (type !== "delete") {
     switch (table) {
@@ -72,6 +72,68 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 
         relatedData = { subjects: teacherSubjects };
         break;
+
+      case "student":
+        const studentGrades = await prisma.grade.findMany({
+          select: {
+            id: true,
+            level: true,
+          },
+        });
+        const studentClasses = await prisma.class.findMany({
+          include: { _count: { select: { students: true } } },
+        });
+        const studentParents = await prisma.parent.findMany({
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        });
+
+        relatedData = {
+          classes: studentClasses,
+          grades: studentGrades,
+          parents: studentParents,
+        };
+        break;
+
+      case "parent":
+        const parentStudents = await prisma.student.findMany({
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        });
+
+        relatedData = {
+          students: parentStudents,
+        };
+        break;
+
+
+        case "attendance":
+        const teacherAttendance = await prisma.teacher.findUnique({
+          where: {
+            id: currentUserId,
+
+          },
+          select: {
+            id: true, 
+            firstName: true,
+            lastName: true,
+            email: true,
+            img: true,
+          },
+        });
+
+        relatedData = {
+          attendance: teacherAttendance,
+        };
+        break;
+
+
 
       default:
         break;

@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -7,9 +7,9 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
 import { Parent, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
 
 type ParentLists = Parent & { students: Student[] };
+
 const ParentList = async ({
   searchParams,
 }: {
@@ -74,10 +74,7 @@ const ParentList = async ({
 
       <td className="hidden md:table-cell">
         {item.students
-          .map(
-            (student) =>
-              `${student.firstName} ${student.lastName}`
-          )
+          .map((student) => `${student.firstName} ${student.lastName}`)
           .join(", ")}
       </td>
 
@@ -87,8 +84,8 @@ const ParentList = async ({
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <>
-              <FormModal type="update" table="parent" data={item} />
-              <FormModal type="delete" table="parent" id={item.id} />
+              <FormContainer type="update" table="parent" data={item} />
+              <FormContainer type="delete" table="parent" id={item.id} />
             </>
           )}
         </div>
@@ -110,7 +107,7 @@ const ParentList = async ({
           case "search": {
             query.OR = [
               { firstName: { contains: value, mode: "insensitive" } },
-              
+
               { lastName: { contains: value, mode: "insensitive" } },
             ];
             break;
@@ -150,7 +147,7 @@ const ParentList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal type="create" table="parent" />}
+            {role === "admin" && <FormContainer type="create" table="parent" />}
           </div>
         </div>
       </div>

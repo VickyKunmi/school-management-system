@@ -1,18 +1,30 @@
+
+
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import BirthdayCelebration from "@/components/BirthdayCelebration";
+import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
-const teacher = {
-  firstName: "John",
-  birthday: new Date(2024, 10, 10),
-};
 
-// const authObject = await auth();
+
+const TeacherPage = async () => {
+
   const { userId } = auth();
+  
+  const teacher = await prisma.teacher.findUnique({
+    where: { id: userId || "" }, 
+  });
+
+ 
+
+  if (!teacher) {
+    return <div>Loading...</div>; 
+  }
 
 
-const TeacherPage = () => {
+
+  
   return (
     // <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
     <div className="p-4 flex flex-col gap-4">

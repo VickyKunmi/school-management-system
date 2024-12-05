@@ -5,13 +5,20 @@ import EventCalendar from "@/components/EventCalendar";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
-const student = {
-  firstName: "John",
-  birthday: new Date(2024, 9, 29),
-};
 
 const StudentPage = async () => {
   const {userId} = auth();
+
+
+  const student = await prisma.student.findUnique({
+    where: { id: userId || "" },
+  });
+
+  if (!student) {
+    return <div>No student data found</div>;
+  }
+
+  
 
   const classItem = await prisma.class.findMany({
     where: {
@@ -25,6 +32,7 @@ console.log("class items:", classItem)
   return (
     // <div className='p-4 flex gap-4 flex-col xl:flex-row'>
     <div className="p-4 flex flex-col gap-4">
+      
       <BirthdayCelebration user={student} />
 
       <div className="flex gap-4 flex-col xl:flex-row">

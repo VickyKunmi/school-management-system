@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -17,8 +17,8 @@ const StudentList = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
   
-  const authObject = await auth();
-  const { sessionClaims } = authObject;
+  
+  const { sessionClaims } = auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
   
   const columns = [
@@ -87,7 +87,7 @@ const StudentList = async ({
             </button>
           </Link>
           {role === "admin" && (
-            <FormModal type="delete" table="student" id={item.id} />
+            <FormContainer type="delete" table="student" id={item.id} />
           )}
         </div>
       </td>
@@ -163,7 +163,7 @@ const StudentList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal type="create" table="student" />}
+            {role === "admin" && <FormContainer type="create" table="student" />}
           </div>
         </div>
       </div>
