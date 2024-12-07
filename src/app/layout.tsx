@@ -5,12 +5,14 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const inter = Inter({ subsets: ["latin"] });
 
+const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Great Tess",
   description: "Great Tess",
 };
+
+
 
 export default function RootLayout({
   children,
@@ -27,3 +29,6 @@ export default function RootLayout({
     </ClerkProvider>
   );
 }
+
+
+

@@ -10,7 +10,7 @@ import { auth } from "@clerk/nextjs/server";
 
 const TeacherPage = async () => {
 
-  const { userId } = auth();
+  const { userId } = await auth();
   
   const teacher = await prisma.teacher.findUnique({
     where: { id: userId || "" }, 

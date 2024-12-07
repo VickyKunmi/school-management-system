@@ -249,6 +249,7 @@ const Attendance = () => {
 
     // Clear the result and error after 1 minute
     setTimeout(() => {
+      setScanningInProgress(false)
       setResult(null);
       setError(null);
     }, 30000);

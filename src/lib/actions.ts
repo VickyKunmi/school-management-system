@@ -9,9 +9,12 @@ import {
   AttendanceSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import {clerkClient, auth } from "@clerk/nextjs/server";
+
 
 type CurrentState = { success: boolean; error: boolean; message?: string };
+
+
 
 export const createSubject = async (
   currentState: CurrentState,
@@ -145,8 +148,10 @@ export const createTeacher = async (
   let userId: string | null = null;
 
   try {
+    // Await the clerkClient to get the actual Clerk client instance
+    const client = await clerkClient(); // Ensure that you await clerkClient()
+
     // Create the user in Clerk and retrieve the generated ID
-    const client = clerkClient();
     const user = await client.users.createUser({
       username: data.username,
       password: data.password,
@@ -190,7 +195,7 @@ export const createTeacher = async (
     // Rollback the Clerk user if Prisma operation fails
     if (userId) {
       try {
-        const client = clerkClient();
+        const client = await clerkClient(); // Await the client again for rollback
         await client.users.deleteUser(userId); // Delete the Clerk user
       } catch (rollbackError) {
         console.error("Failed to rollback Clerk user:", rollbackError);
@@ -224,17 +229,13 @@ export const createTeacher = async (
     // Handle specific Prisma errors
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        // Check if error.meta exists and is of type object with 'target' array
         const meta = error.meta;
         if (meta && Array.isArray(meta.target)) {
           const field = meta.target[0]; // First field that caused the violation
-          const message = `${
-            field.charAt(0).toUpperCase() + field.slice(1)
-          } already exists`;
+          const message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
           return { success: false, error: true, message: message };
         }
       } else {
-        // Handle other specific Prisma errors
         console.error("Prisma Known Error: ", error.message);
         return {
           success: false,
@@ -247,10 +248,11 @@ export const createTeacher = async (
     return {
       success: false,
       error: true,
-      message: "An error occured while creating!",
+      message: "An error occurred while creating!",
     };
   }
 };
+
 
 export const updateTeacher = async (
   currentState: CurrentState,
@@ -260,7 +262,8 @@ export const updateTeacher = async (
     return { success: false, error: true };
   }
   try {
-    const user = await clerkClient.users.updateUser(data.id, {
+    const client = await clerkClient();
+    const user = await client.users.updateUser(data.id, {
       username: data.username,
       ...(data.password !== "" && { password: data.password }),
       firstName: data.firstName,
@@ -357,7 +360,8 @@ export const deleteTeacher = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await clerkClient.users.deleteUser(id);
+    const client = await clerkClient();
+    await client.users.deleteUser(id);
 
     await prisma.teacher.delete({
       where: {
@@ -394,9 +398,10 @@ export const createStudent = async (
       };
     }
 
-    const client = clerkClient();
+    // const client = clerkClient();
 
     // Create the user in Clerk
+    const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
       password: data.password,
@@ -436,7 +441,7 @@ export const createStudent = async (
     console.log("Error creating user: ", error);
     if (userId) {
       try {
-        const client = clerkClient();
+        const client = await clerkClient();
         await client.users.deleteUser(userId); // Delete the Clerk user
       } catch (rollbackError) {
         console.error("Failed to rollback Clerk user:", rollbackError);
@@ -507,7 +512,8 @@ export const updateStudent = async (
     return { success: false, error: true };
   }
   try {
-    const user = await clerkClient.users.updateUser(data.id, {
+    const client = await clerkClient();
+    const user = await client.users.updateUser(data.id, {
       username: data.username,
       ...(data.password !== "" && { password: data.password }),
       firstName: data.firstName,
@@ -599,7 +605,8 @@ export const deleteStudent = async (
 ) => {
   const id = data.get("id") as string;
   try {
-    await clerkClient.users.deleteUser(id);
+    const client = await clerkClient();
+    await client.users.deleteUser(id);
 
     await prisma.student.delete({
       where: {
@@ -622,9 +629,10 @@ export const createParent = async (
   let userId: string | null = null;
 
   try {
-    const client = clerkClient();
+    // const client = clerkClient();
 
     // Create the user in Clerk
+    const client = await clerkClient();
     const user = await client.users.createUser({
       username: data.username,
       password: data.password,
@@ -666,7 +674,7 @@ export const createParent = async (
     console.log("Error creating user: ", error);
     if (userId) {
       try {
-        const client = clerkClient();
+        const client = await clerkClient();
         await client.users.deleteUser(userId); // Delete the Clerk user
       } catch (rollbackError) {
         console.error("Failed to rollback Clerk user:", rollbackError);
@@ -729,6 +737,8 @@ export const createParent = async (
   }
 };
 
+
+
 export const updateParent = async (
   currentState: CurrentState,
   data: ParentSchema
@@ -736,14 +746,20 @@ export const updateParent = async (
   if (!data.id) {
     return { success: false, error: true };
   }
+
   try {
-    await clerkClient.users.updateUser(data.id, {
+    // Await the clerkClient to get the actual Clerk client instance
+    const client = await clerkClient(); 
+
+    // Use the client to update the user
+    await client.users.updateUser(data.id, {
       username: data.username,
       ...(data.password !== "" && { password: data.password }),
       firstName: data.firstName,
       lastName: data.lastName,
     });
 
+    // Update the parent record in the database
     await prisma.parent.update({
       where: {
         id: data.id,
@@ -766,7 +782,7 @@ export const updateParent = async (
         },
       },
     });
-    // revalidatePath("/list/teachers");
+
     return {
       success: true,
       error: false,
@@ -774,6 +790,7 @@ export const updateParent = async (
     };
   } catch (error) {
     console.log(error);
+
     if (
       error &&
       typeof error === "object" &&
@@ -785,7 +802,6 @@ export const updateParent = async (
         const clerkError = clerkErrors[0]; // Get the first error
         console.log("Clerk Error:", clerkError);
 
-        // Handle 'form_identifier_exists' error code from Clerk
         if (clerkError.code === "form_identifier_exists") {
           return {
             success: false,
@@ -800,17 +816,13 @@ export const updateParent = async (
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        // Check if error.meta exists and is of type object with 'target' array
         const meta = error.meta;
         if (meta && Array.isArray(meta.target)) {
           const field = meta.target[0]; // First field that caused the violation
-          const message = `${
-            field.charAt(0).toUpperCase() + field.slice(1)
-          } already exists`;
+          const message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
           return { success: false, error: true, message: message };
         }
       } else {
-        // Handle other specific Prisma errors
         console.error("Prisma Known Error: ", error.message);
         return {
           success: false,
@@ -823,6 +835,7 @@ export const updateParent = async (
     return { success: false, error: true, message: "Unable to update parent" };
   }
 };
+
 
 
 
@@ -847,8 +860,9 @@ export const deleteParent = async (
       },
     });
 
-    // Delete Clerk user
-    await clerkClient.users.deleteUser(id);
+    // Initialize Clerk client and delete the user
+    const client = await clerkClient(); // This should give you the actual ClerkClient instance
+    await client.users.deleteUser(id); // Ensure 'id' corresponds to the Clerk user ID
 
     return { success: true, error: false };
   } catch (err) {
@@ -858,81 +872,6 @@ export const deleteParent = async (
 };
 
 
-
-
-
-
-
-// export const createAttendance = async (
-//   // currentState: CurrentState,
-//   data: AttendanceSchema
-// ) => {
-//   try {
-//     const expiresAt = new Date(new Date().getTime() + 10 * 60 * 1000);
-
-
-//      // Check if attendance already exists for the teacher and date
-//      const existingAttendance = await prisma.teacherAttendance.findFirst({
-//       where: {
-//         teacherId: data.teacherId,
-//         date: data.date,
-//         signOutTime: null, // only consider records that haven't been signed out yet
-//       },
-//     });
-
-//     if (existingAttendance) {
-//       // If attendance exists, you can update sign-in or sign-out times as needed
-//       return {
-//         success: false,
-//         error: true,
-//         message: "Attendance already recorded for this date and teacher",
-//       };
-//     }
-
-
-//     // Create new attendance if no record found
-//     await prisma.teacherAttendance.create({
-//       data: {
-//         teacher: { 
-//           connect: { id: data.teacherId },
-//         },
-//         date: data.date,
-//         startTime: data.startTime,
-//         endTime: data.endTime,
-//         signInTime: data.signInTime,
-//         signOutTime: data.signOutTime ?? null,
-//         status: data.status, 
-//         qrCode: data.qrCode,
-//         expiresAt: expiresAt,
-//       },
-//     });
-
-//     return {
-//       success: true,
-//       error: false,
-//       message: "Attendance record created successfully!",
-//     };
-//   } catch (error) {
-//     console.error("Error creating attendance record:", error);
-
-//     // Handle specific Prisma errors
-//     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-//       if (error.code === "P2002") {
-//         return {
-//           success: false,
-//           error: true,
-//           message: "Attendance record already exists for the specified date.",
-//         };
-//       }
-//     }
-
-//     return {
-//       success: false,
-//       error: true,
-//       message: "An error occurred while creating the attendance record.",
-//     };
-//   }
-// };
 
 
 
@@ -1098,40 +1037,107 @@ export const validateQRCode = async (qrCodeData: string) => {
 
 
 
-export const fetchTeacherAndAttendance = async () => {
-  const { userId } = auth();
 
-  if (!userId) {
-    throw new Error("User is not authenticated");
+
+
+
+
+
+
+export const fetchTeacherAndAttendance = async (userId: string) => {
+  try {
+    const session = await auth();
+    console.log("session: ", session);
+    console.log("Session Claims:", session.sessionClaims);
+
+    const role = (session?.sessionClaims?.metadata as { role?: string })?.role;
+    console.log("role: ", role);
+
+    if (!userId) {
+      throw new Error("User is not authenticated");
+    }
+
+    let teacher;
+    let attendanceData;
+
+    // Fetch teacher details based on role
+    if (role === "admin") {
+      teacher = await prisma.teacher.findMany({
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          img: true,
+        },
+      });
+      // If admin, handle the case where teacher is an array
+      if (!teacher || teacher.length === 0) {
+        throw new Error("No teachers found");
+      }
+      // Admin can get a list of teachers, but we set it to the first teacher or null
+      teacher = teacher.length > 0 ? teacher[0] : null;
+    } else {
+      // Regular user (teacher) sees only their own data
+      teacher = await prisma.teacher.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          img: true,
+        },
+      });
+      if (!teacher) {
+        throw new Error("Teacher not found");
+      }
+    }
+
+    // Fetch attendance data based on the role
+    if (role === "admin") {
+      attendanceData = await prisma.teacherAttendance.findMany({
+        select: {
+          id: true,
+          date: true,
+          startTime: true,
+          endTime: true,
+          signInTime: true,
+          signOutTime: true,
+          status: true,
+          teacher: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+    } else {
+      attendanceData = await prisma.teacherAttendance.findMany({
+        where: { teacherId: userId },
+        select: {
+          id: true,
+          date: true,
+          startTime: true,
+          endTime: true,
+          signInTime: true,
+          signOutTime: true,
+          status: true,
+          teacher: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
+    }
+
+    return { teacher, attendanceData, role };
+  } catch (error) {
+    console.error(error);
+    throw new Error("Error fetching teacher and attendance data");
   }
-
-  const teacher = await prisma.teacher.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      img: true,
-    },
-  });
-
-  if (!teacher) {
-    throw new Error("Teacher not found");
-  }
-
-  const attendanceData = await prisma.teacherAttendance.findMany({
-    where: { teacherId: userId },
-    select: {
-      id: true,
-      date: true,
-      startTime: true,
-      endTime: true,
-      signInTime: true,
-      signOutTime: true,
-      status: true,
-    },
-  });
-
-  return { teacher, attendanceData };
 };
+

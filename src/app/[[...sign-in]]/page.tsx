@@ -15,33 +15,45 @@ const LoginPage = () => {
   
   
   
-  // useEffect(() => {
-  //   const role = user?.publicMetadata.role;
-  //   console.log("role", role)
-  //   console.log("role path", `/${role}`)
-
-  //   if(role) {
-  //     router.push(`/${role}`)
-  //   }
-  // }, [user, router])
   
+
+  // useEffect(() => {
+  //   // Make sure user is loaded before accessing role
+  //   if (isLoaded && user) {
+  //     const role = user.publicMetadata.role;
+  //     console.log("role", role);
+  //     console.log("role path", `/${role}`);
+
+  //     if (role) {
+  //       router.push(`/${role}`);
+  //     }
+  //   }
+  // }, [isLoaded, user, router]);
 
 
   useEffect(() => {
-    // Make sure user is loaded before accessing role
     if (isLoaded && user) {
       const role = user.publicMetadata.role;
       console.log("role", role);
-      console.log("role path", `/${role}`);
-
+  
       if (role) {
         router.push(`/${role}`);
+      } else {
+        console.error("Role not defined for user!");
+        router.push("/error"); // Redirect to a generic error or default page
       }
     }
   }, [isLoaded, user, router]);
+  
 
 
- 
+  if (!isLoaded) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-yellow">
+        <div className="loader">Loading...</div>
+      </div>
+    );
+  }
 
   
 
@@ -91,8 +103,50 @@ const LoginPage = () => {
           </SignIn.Action>
         </SignIn.Step>
       </SignIn.Root>
+      
     </div>
   );
 };
 
 export default LoginPage;
+
+
+
+
+// "use client";
+
+// import { useSignIn } from "@clerk/nextjs";
+// import React from "react";
+
+// const LoginPage = () => {
+//   const { signIn, isLoaded } = useSignIn();
+
+//   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+//     e.preventDefault();
+
+//     // Access form data
+//     const form = e.currentTarget;
+//     const username = form.username.value;
+//     const password = form.password.value;
+
+//     if (isLoaded) {
+//       try {
+//         await signIn.create({ identifier: username, password });
+//         alert("Signed in successfully!");
+//       } catch (error) {
+//         console.error("Login failed", error);
+//         alert("Login failed. Please check your credentials.");
+//       }
+//     }
+//   };
+
+//   return (
+//     <form onSubmit={handleLogin} className="p-4">
+//       <input type="text" name="username" placeholder="Username" required />
+//       <input type="password" name="password" placeholder="Password" required />
+//       <button type="submit">Sign In</button>
+//     </form>
+//   );
+// };
+
+// export default LoginPage;
