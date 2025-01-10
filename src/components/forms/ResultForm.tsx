@@ -27,9 +27,6 @@ const ResultForm = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
 }) => {
-
-  
-
   const formattedData = data
     ? {
         ...data,
@@ -45,16 +42,9 @@ const ResultForm = ({
             (assignment: { title: string }) => assignment.title === data.title
           )?.id ||
           "",
-          
-        
+        studentId: data.studentId,
       }
     : {};
-
-
-
-    
-
-
 
   console.log("formatted Data: ", formattedData);
   console.log("Data: ", data);
@@ -75,7 +65,6 @@ const ResultForm = ({
   } = useForm<ResultSchema>({
     resolver: zodResolver(resultSchema),
     defaultValues: formattedData,
-    
   });
 
   const [state, formAction] = useFormState(
@@ -86,14 +75,12 @@ const ResultForm = ({
     }
   );
 
-
-
   useEffect(() => {
     if (type === "update" && data) {
       // Set the default values for examId, assignmentId, and studentId
       setSelectedExamId(data.examId || "");
       setSelectedAssignmentId(data.assignmentId || "");
-
+      // setValue("studentId", data.studentId || "");
     }
   }, [
     type,
@@ -102,6 +89,24 @@ const ResultForm = ({
     relatedData?.studentsByExam,
     relatedData?.studentsByAssignment,
   ]);
+
+  // useEffect(() => {
+  //   if (selectedExamId && relatedData?.studentsByExam) {
+  //     const selectedExamStudents = relatedData.studentsByExam.find(
+  //       (mapping: { examId: number }) =>
+  //         mapping.examId === Number(selectedExamId)
+  //     );
+  //     setFilteredStudents(selectedExamStudents?.students || []);
+  //   } else if (selectedAssignmentId && relatedData?.studentsByAssignment) {
+  //     const selectedAssignmentStudents = relatedData.studentsByAssignment.find(
+  //       (mapping: { assignmentId: number }) =>
+  //         mapping.assignmentId === Number(selectedAssignmentId)
+  //     );
+  //     setFilteredStudents(selectedAssignmentStudents?.students || []);
+  //   } else {
+  //     setFilteredStudents(relatedData?.students || []); // Fallback to all students
+  //   }
+  // }, [selectedExamId, selectedAssignmentId, relatedData]);
 
   useEffect(() => {
     if (selectedExamId && relatedData?.studentsByExam) {
@@ -122,7 +127,6 @@ const ResultForm = ({
   }, [selectedExamId, selectedAssignmentId, relatedData]);
 
   const onSubmit = handleSubmit((data) => {
-    console.log("data", data);
     formAction(data);
   });
 
@@ -138,6 +142,10 @@ const ResultForm = ({
 
   const { exams, assignments } = relatedData;
   console.log("related student: ", relatedData.students);
+
+  const selectedStudent = filteredStudents.find(
+    (student) => student.studentId === formattedData?.studentId
+  );
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -165,8 +173,6 @@ const ResultForm = ({
           />
         )}
 
-       
-
         <div className="flex flex-col gap-2">
           <label className="text-sm text-gray-500">Exam</label>
           <select
@@ -176,7 +182,6 @@ const ResultForm = ({
             onChange={(e) => {
               const value = e.target.value;
               setSelectedExamId(value !== "" ? Number(value) : "");
-
             }}
           >
             <option value="">Select an Exam</option>
@@ -200,7 +205,6 @@ const ResultForm = ({
             onChange={(e) => {
               const value = e.target.value;
               setSelectedAssignmentId(value !== "" ? Number(value) : "");
-              
             }}
           >
             <option value="">Select an Assignment</option>
@@ -219,10 +223,18 @@ const ResultForm = ({
 
         <div className="flex flex-col gap-2">
           <label className="text-sm text-gray-500">Student</label>
+          {formattedData ? (
+                  <p>
+                    Existing Student: {formattedData.studentFirstName}{" "}
+                    {formattedData.studentLastName}
+                  </p>
+                ) : (
+                  <p>No student selected</p>
+                )}
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("studentId")}
-            defaultValue={formattedData?.studentId}
+            defaultValue={formattedData?.studentId || ""}
           >
             <option value="">Select student</option>
             {filteredStudents.length > 0 ? (
@@ -233,7 +245,8 @@ const ResultForm = ({
               ))
             ) : (
               <option value="" disabled>
-                No students available
+                No student selected
+                
               </option>
             )}
           </select>

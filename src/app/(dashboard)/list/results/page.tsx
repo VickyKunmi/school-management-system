@@ -12,7 +12,7 @@ type ResultLists = {
   id: number;
   title: string;
   studentFirstName: string;
-  
+  studentId: string;
   studentLastName: string;
   teacherFirstName: string;
 
@@ -176,7 +176,7 @@ const ResultList = async ({
       where: query,
       include: {
         student: {
-          select: { firstName: true,  lastName: true },
+          select: {id: true, firstName: true,  lastName: true },
         },
         exam: {
           include: {
@@ -223,6 +223,7 @@ const ResultList = async ({
       id: item.id,
       title: assessment.title,
       studentFirstName: item.student.firstName,
+      studentId: item.student.id,
       studentLastName: item.student.lastName,
 
       teacherFirstName: assessment.lesson.teacher.firstName,

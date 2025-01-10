@@ -1570,7 +1570,6 @@ export const createResult = async (
       data: {
         score: data.score,
         studentId: data.studentId,
-        
         ...(data.examId ? { examId: data.examId } : {}),
         ...(data.assignmentId ? { assignmentId: data.assignmentId } : {}),
       },
@@ -1619,6 +1618,17 @@ export const updateResult = async (
         return { success: false, error: true, message: "Unauthorized action." };
       }
     }
+
+
+    const studentExists = await prisma.student.findUnique({
+      where: { id: data.studentId },
+    });
+    
+    if (!studentExists) {
+      console.error(`Student with ID ${data.studentId} does not exist.`);
+      return { success: false, error: true, message: "Invalid student ID." };
+    }
+
 
     await prisma.result.update({
       where: { id: data.id },
