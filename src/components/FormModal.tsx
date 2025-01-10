@@ -5,8 +5,12 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormState } from "react-dom";
 import {
+  deleteAssignment,
   deleteClass,
+  deleteExam,
+  deleteLesson,
   deleteParent,
+  deleteResult,
   deleteStudent,
   deleteSubject,
   deleteTeacher,
@@ -21,10 +25,10 @@ const deleteActionMap = {
   teacher: deleteTeacher,
   student: deleteStudent,
   parent: deleteParent,
-  lesson: deleteSubject,
-  exam: deleteSubject,
-  assignment: deleteSubject,
-  result: deleteSubject,
+  lesson: deleteLesson,
+  exam: deleteExam,
+  assignment: deleteAssignment,
+  result: deleteResult,
   attendance: deleteSubject,
   event: deleteSubject,
   announcement: deleteSubject,
@@ -94,10 +98,10 @@ const forms: {
 } = {
   teacher: (setOpen, type, data, relatedData) => (
     <TeacherForm
-      type={type}
-      data={data}
-      setOpen={setOpen}
-      relatedData={relatedData}
+    type={type}
+    data={data}
+    setOpen={setOpen}
+    relatedData={relatedData}
     />
   ),
   student: (setOpen, type, data, relatedData) => (
@@ -132,6 +136,7 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+
   lesson: (setOpen, type, data, relatedData) => (
     <LessonForm
       type={type}
@@ -140,6 +145,7 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+ 
   exam: (setOpen, type, data, relatedData) => (
     <ExamForm
       type={type}
@@ -256,10 +262,10 @@ const FormModal = ({
       </button>
       {open && (
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ">
+          <div className="bg-white p-8 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%] ">
             <Form />
             <div
-              className="absolute top-4 right-4 cursor-pointer"
+              className="absolute top-8 right-4 cursor-pointer"
               onClick={() => setOpen(false)}
             >
               <Image src="/close.png" alt="" width={14} height={14} />

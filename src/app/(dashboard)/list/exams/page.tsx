@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -47,8 +47,23 @@ const ExamList = async ({
       accessor: "date",
       className: "hidden md:table-cell",
     },
+    {
+      header: "Start Time",
+      accessor: "startTime",
+      className: "hidden md:table-cell",
 
-    ...(role === "admin"
+      
+    },
+
+    {
+      header: "End Time",
+      accessor: "endTime",
+      className: "hidden md:table-cell",
+
+      
+    },
+
+    ...(role === "admin" || role === "teacher"
       ? [
           {
             header: "Actions",
@@ -72,15 +87,28 @@ const ExamList = async ({
         {`${item.lesson.teacher.firstName} ${item.lesson.teacher.lastName}`}
       </td>
       <td className="hidden md:table-cell">
-        {new Intl.DateTimeFormat("en-GH").format(item.startTime)}
+        {/* {new Intl.DateTimeFormat("en-GH").format(item.startTime)} */}
+        {new Date(item.startTime).toLocaleDateString("en-GH")}
       </td>
+      <td className="hidden md:table-cell">
+      {new Date(item.startTime).toLocaleTimeString("en-GH", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </td>
+    <td className="hidden md:table-cell">
+      {new Date(item.endTime).toLocaleTimeString("en-GH", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </td>
       <td>
         <div className="flex items-center gap-2">
           <Link href={`/list/teacher/${item.id}`}></Link>
           {role === "admin" && (
             <>
-              <FormModal type="update" table="exam" data={item} />
-              <FormModal type="delete" table="exam" id={item.id} />
+              <FormContainer type="update" table="exam" data={item} />
+              <FormContainer type="delete" table="exam" id={item.id} />
             </>
           )}
         </div>
@@ -193,7 +221,7 @@ const ExamList = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {(role === "admin" || role === "teacher") && (
-              <FormModal type="create" table="exam" />
+              <FormContainer type="create" table="exam" />
             )}
           </div>
         </div>

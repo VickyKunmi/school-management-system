@@ -5,37 +5,19 @@ import * as SignIn from "@clerk/elements/sign-in";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const LoginPage = () => {
   const { isLoaded, isSignedIn, user } = useUser();
-  // console.log(user)
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  
-  
-  
-  
-  
-
-  // useEffect(() => {
-  //   // Make sure user is loaded before accessing role
-  //   if (isLoaded && user) {
-  //     const role = user.publicMetadata.role;
-  //     console.log("role", role);
-  //     console.log("role path", `/${role}`);
-
-  //     if (role) {
-  //       router.push(`/${role}`);
-  //     }
-  //   }
-  // }, [isLoaded, user, router]);
-
 
   useEffect(() => {
     if (isLoaded && user) {
       const role = user.publicMetadata.role;
       console.log("role", role);
-  
+
       if (role) {
         router.push(`/${role}`);
       } else {
@@ -44,8 +26,6 @@ const LoginPage = () => {
       }
     }
   }, [isLoaded, user, router]);
-  
-
 
   if (!isLoaded) {
     return (
@@ -55,8 +35,7 @@ const LoginPage = () => {
     );
   }
 
-  
-
+  const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
   return (
     <div className="h-screen flex items-center justify-center bg-yellow">
@@ -87,11 +66,21 @@ const LoginPage = () => {
             <Clerk.Label className="text-xs text-gray-500">
               Password
             </Clerk.Label>
-            <Clerk.Input
-              type="password"
-              required
-              className="p-2 rounded-md ring-1 ring-gray-300"
-            />
+            <div className="relative">
+              <Clerk.Input
+                // type="password"
+                type={showPassword ? "text" : "password"}
+                required
+                className="p-2 rounded-md ring-1 ring-gray-300"
+              />
+              <button
+                type="button"
+                onClick={toggleShowPassword}
+                className="absolute right-2 top-2 text-gray-500"
+              >
+                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+              </button>
+            </div>
             <Clerk.FieldError className="text-xs text-red-400" />
           </Clerk.Field>
 
@@ -103,15 +92,11 @@ const LoginPage = () => {
           </SignIn.Action>
         </SignIn.Step>
       </SignIn.Root>
-      
     </div>
   );
 };
 
 export default LoginPage;
-
-
-
 
 // "use client";
 

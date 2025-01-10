@@ -19,6 +19,13 @@ const initialState = {
   error: false,
 };
 
+interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+
 const ParentForm = ({
   type,
   data,
@@ -37,9 +44,11 @@ const ParentForm = ({
     formState: { errors },
   } = useForm<ParentSchema>({
     resolver: zodResolver(parentSchema),
+    defaultValues: data || {},
   });
 
-  const [img, setImg] = useState<any>();
+  // const [img, setImg] = useState<any>();
+  const [img, setImg] = useState<any>(data?.img || null);
   const [showPassword, setShowPassword] = useState(false);
 
   const [state, formAction] = useFormState(
@@ -47,12 +56,7 @@ const ParentForm = ({
     initialState
   );
 
-  const onSubmit = handleSubmit((data) => {
-    formAction({
-      ...data,
-      img: img.secure_url,
-    });
-  });
+  
 
   const router = useRouter();
 
@@ -74,6 +78,21 @@ const ParentForm = ({
   const [selectedStudent, setSelectedStudent] = useState<number[]>(
     data?.studentIds || []
   );
+
+
+  const handleRemoveStudent = (studentId: number, e: React.MouseEvent) => {
+    // Prevent the click from triggering the list item onClick
+    e.stopPropagation();
+  
+    // Remove the student from the selectedStudent array
+    const updatedStudents = selectedStudent.filter(id => id !== studentId);
+    setSelectedStudent(updatedStudents); // Update the selectedStudent state
+  
+    // Update the studentId in react-hook-form state
+    setValue("studentId", updatedStudents.map(String), { shouldValidate: true }); // Convert to string[] for form state
+  };
+  
+
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -118,12 +137,31 @@ const ParentForm = ({
     });
   }, [selectedStudent, setValue]);
 
-  const selectedStudentsDisplay = selectedStudent
-    .map((id) => {
-      const student = students.find((s: { id: number }) => s.id === id);
-      return student ? `${student.firstName} ${student.lastName}` : "";
-    })
-    .join(", ");
+ // Map selected student IDs to their names for display
+const selectedStudentsDisplay = selectedStudent
+.map((id) => {
+  const student = students.find((s: { id: number }) => s.id === id);
+  return student ? `${student.firstName} ${student.lastName}` : "";
+})
+.join(", ");
+
+
+
+useEffect(() => {
+  if (data?.students && data.students.length > 0) {
+    setSelectedStudent(data.students.map((student: Student) => student.id));  // Extract the IDs from data.students
+  }
+}, [data]);
+    
+
+  const onSubmit = handleSubmit((data) => {
+    console.log("data: ", data)
+    formAction({
+      ...data,
+      img: img.secure_url || data.img,
+    });
+  });
+
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -248,14 +286,23 @@ const ParentForm = ({
                     onClick={() => handleSelectStudent(student)}
                   >
                     {student.firstName} {student.lastName}
+                    <button
+                    type="button"
+
+                      onClick={(e) => handleRemoveStudent(student.id, e)} // Deselect the student
+                      className="text-xs text-red-500"
+                    >
+                      X
+                    </button>
                   </li>
                 )
               )}
             </ul>
           )}
-          {errors.studentId?.message && (
+
+          {/* {errors.studentId?.message && (
             <p className="text-xs text-red-400">{errors.studentId.message}</p>
-          )}
+          )} */}
         </div>
 
         {data && (
@@ -339,3 +386,7 @@ const ParentForm = ({
 };
 
 export default ParentForm;
+
+
+
+

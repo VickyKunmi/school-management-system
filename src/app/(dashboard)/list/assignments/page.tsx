@@ -1,4 +1,4 @@
-import FormModal from "@/components/FormModal";
+import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -24,8 +24,8 @@ const AssignmnetList = async ({
 }) => {
   const authObject = await auth();
   const { userId, sessionClaims } = authObject;
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
   const currentUserId = userId;
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
 
   const columns = [
     {
@@ -68,10 +68,7 @@ const AssignmnetList = async ({
       </td>
       <td>{item.lesson.class.name}</td>
       <td className="hidden md:table-cell">
-        {item.lesson.teacher.firstName +
-          " " +
-         
-          item.lesson.teacher.lastName}
+        {item.lesson.teacher.firstName + " " + item.lesson.teacher.lastName}
       </td>
       <td className="hidden md:table-cell">
         {new Intl.DateTimeFormat("en-GH").format(item.dueDate)}{" "}
@@ -80,13 +77,12 @@ const AssignmnetList = async ({
       <td>
         <div className="flex items-center gap-2">
           <Link href={`/list/teacher/${item.id}`}></Link>
-          {role === "admin" ||
-            (role === "teacher" && (
-              <>
-                <FormModal type="update" table="assignment" data={item} />
-                <FormModal type="delete" table="assignment" id={item.id} />
-              </>
-            ))}
+          {(role === "admin" || role === "teacher") && (
+            <>
+              <FormContainer type="update" table="assignment" data={item} />
+              <FormContainer type="delete" table="assignment" id={item.id} />
+            </>
+          )}
         </div>
       </td>
     </tr>
@@ -121,7 +117,7 @@ const AssignmnetList = async ({
               subject: { name: { contains: value, mode: "insensitive" } },
               teacher: {
                 firstName: { contains: value, mode: "insensitive" },
-                
+
                 lastName: { contains: value, mode: "insensitive" },
               },
             };
@@ -203,10 +199,14 @@ const AssignmnetList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" ||
+            {/* {role === "admin" ||
               (role === "teacher" && (
-                <FormModal type="create" table="assignment" />
-              ))}
+                <FormContainer type="create" table="assignment" />
+              ))} */}
+
+            {(role === "admin" || role === "teacher") && (
+              <FormContainer type="create" table="assignment" />
+            )}
           </div>
         </div>
       </div>

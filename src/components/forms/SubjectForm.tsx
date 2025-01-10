@@ -54,6 +54,7 @@ const SubjectForm = ({
 
   // const { teachers } = relatedData;
   const { teachers } = relatedData;
+  console.log(relatedData, "data")
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>

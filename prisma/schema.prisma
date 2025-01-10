@@ -82,7 +82,7 @@ model TeacherAttendance {
   status     AttendanceStatus @default(Absent)
   qrCode     String
   expiresAt  DateTime
-  teacher    Teacher  @relation(fields: [teacherId], references: [id])
+   teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
 
   @@unique([teacherId, date])
@@ -121,8 +121,8 @@ model Lesson {
   id          Int          @id @default(autoincrement())
   name        String
   day         Day
-  startTime   DateTime
-  endTime     DateTime
+  startTime   String
+  endTime     String
   subjectId   Int
   subject     Subject      @relation(fields: [subjectId], references: [id])
   classId     Int

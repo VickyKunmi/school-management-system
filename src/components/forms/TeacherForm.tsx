@@ -38,20 +38,42 @@ const TeacherForm = ({
     formState: { errors },
   } = useForm<TeacherSchema>({
     resolver: zodResolver(teacherSchema),
-  });
+    defaultValues: data || {},
 
-  const [img, setImg] = useState<any>();
+    
+  });
+  
+
+  const [img, setImg] = useState<any>(data?.img || null);
   const [showPassword, setShowPassword] = useState(false);
   // const [img, setImg] = useState<CloudinaryUploadWidgetInfo | null>(null);
-
+  const isUpdateForm = type === "create" || !data?.img;
   const [state, formAction] = useFormState(
     type === "create" ? createTeacher : updateTeacher,
     initialState
   );
 
   const onSubmit = handleSubmit((data) => {
-    formAction({ ...data, img: img.secure_url });
+    console.log("Data: ", data);
+    // formAction({ ...data, img: img.secure_url || data.img  });
+    formAction({
+      ...data,
+      img: img.secure_url || data.img,
+      subjects: getValues("subjects") || data.subjects,
+    });
   });
+
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(
+      e.target.selectedOptions,
+      (option) => option.value
+    );
+    const currentValues = getValues("subjects") || [];
+    const uniqueValues = Array.from(
+      new Set([...currentValues, ...selectedOptions])
+    );
+    setValue("subjects", uniqueValues, { shouldValidate: true });
+  };
 
   const router = useRouter();
 
@@ -67,6 +89,15 @@ const TeacherForm = ({
   }, [state, router, type, setOpen]);
 
   const { subjects } = relatedData;
+
+  useEffect(() => {
+    if (data?.subjects) {
+      const subjectIds = data.subjects.map((subject: { id: number }) =>
+        subject.id.toString()
+      );
+      setValue("subjects", subjectIds, { shouldValidate: true });
+    }
+  }, [data, setValue]);
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -189,93 +220,6 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        {/* <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Subjects</label>
-          <select
-            multiple
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("subjects")}
-            defaultValue={data?.subjects}
-          >
-            {subjects.map((subject: { id: number; name: string }) => (
-              <option value={subject.id} key={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
-          {errors.subjects?.message && (
-            <p className="text-xs text-red-400">
-              {errors.subjects.message.toString()}
-            </p>
-          )}
-        </div> */}
-
-        <div className="flex flex-col gap-4 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Subjects</label>
-          <select
-            multiple
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            onChange={(e) => {
-              const selectedOptions = Array.from(
-                e.target.selectedOptions,
-                (option) => option.value
-              );
-              const currentValues = getValues("subjects") || [];
-
-              // Merge current values with newly selected ones
-              const uniqueValues = Array.from(
-                new Set([...currentValues, ...selectedOptions])
-              );
-              setValue("subjects", uniqueValues, { shouldValidate: true });
-            }}
-            defaultValue={data?.subjects}
-          >
-            {subjects.map((subject: { id: number; name: string }) => (
-              <option value={subject.id} key={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Selected Subjects Display */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {(getValues("subjects") || []).map((subjectId: string) => {
-              const subject = subjects.find(
-                (sub: { id: number }) => sub.id.toString() === subjectId
-              );
-
-              return (
-                <span
-                  key={subjectId}
-                  className="bg-gray-200 text-sm px-3 py-1 rounded-md flex items-center gap-2"
-                >
-                  {subject?.name}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const currentValues = getValues("subjects") || [];
-                      const updatedValues = currentValues.filter(
-                        (id: string) => id !== subjectId
-                      );
-                      setValue("subjects", updatedValues, {
-                        shouldValidate: true,
-                      });
-                    }}
-                    className="text-red-500"
-                  >
-                    ✕
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-
-          {errors.subjects?.message && (
-            <p className="text-xs text-red-400">
-              {errors.subjects.message.toString()}
-            </p>
-          )}
-        </div>
 
         <CldUploadWidget
           uploadPreset="schoolManagementSystem"
@@ -299,7 +243,7 @@ const TeacherForm = ({
                   <Image src="/upload.png" alt="" width={28} height={28} />
                   <span>Upload a photo</span>
                 </div>
-               
+
                 <div>
                   {img ? (
                     <p className="text-sm text-gray-600 mt-2">
@@ -317,6 +261,18 @@ const TeacherForm = ({
                         "URL not available"
                       )}
                     </p>
+                  ) : data?.img ? (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Existing Image:{" "}
+                      <a
+                        href={data.img}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 underline"
+                      >
+                        View Image
+                      </a>
+                    </p>
                   ) : (
                     <p className="text-sm text-gray-600 mt-2">
                       No image selected.
@@ -327,7 +283,71 @@ const TeacherForm = ({
             );
           }}
         </CldUploadWidget>
+
+        
+
+        <div className="flex flex-col gap-4 w-full md:w-1/4">
+          <label className="text-xs text-gray-500">Subjects</label>
+          <select
+            multiple
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("subjects")}
+            defaultValue={
+              data?.subjects?.map((subject: { id: number }) =>
+                subject.id.toString()
+              ) || []
+            }
+            onChange={handleSubjectChange}
+          >
+            {subjects.map((subject: { id: number; name: string }) => (
+              <option value={subject.id} key={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Display the selected subjects with 'X' to remove */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {(getValues("subjects") || []).map((subjectId: string) => {
+              const subject = subjects.find(
+                (sub: { id: number }) => sub.id.toString() === subjectId
+              );
+
+              // Ensure that each "X" button only appears for valid selected subjects
+              return subject ? (
+                <span
+                  key={subjectId}
+                  className="bg-gray-200 text-sm px-3 py-1 rounded-md flex items-center gap-2"
+                >
+                  {subject.name}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentValues = getValues("subjects") || [];
+                      const updatedValues = currentValues.filter(
+                        (id: string) => id !== subjectId
+                      );
+                      setValue("subjects", updatedValues, {
+                        shouldValidate: true,
+                      });
+                    }}
+                    className="text-red-500"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ) : null;
+            })}
+          </div>
+
+          {errors.subjects?.message && (
+            <p className="text-xs text-red-400">
+              {errors.subjects.message.toString()}
+            </p>
+          )}
+        </div>
       </div>
+
       {state.error && (
         <span className="text-red-500">
           <p>{state.message}</p>

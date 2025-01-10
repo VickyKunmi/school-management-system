@@ -38,9 +38,10 @@ const StudentForm = ({
     formState: { errors },
   } = useForm<StudentSchema>({
     resolver: zodResolver(studentSchema),
+    defaultValues: data || {}
   });
 
-  const [img, setImg] = useState<any>();
+  const [img, setImg] = useState<any>(data?.img || null);
   const [showPassword, setShowPassword] = useState(false);
 
   const [state, formAction] = useFormState(
@@ -49,7 +50,8 @@ const StudentForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
-    formAction({ ...data, img: img.secure_url });
+    console.log("data: ", data)
+    formAction({ ...data, img: img.secure_url || data.img });
   });
 
   const router = useRouter();
@@ -87,6 +89,19 @@ const StudentForm = ({
       setFilteredParents(parents);
     }
   }, [searchTerm, parents]);
+
+
+  useEffect(() => {
+    if (data?.parentId && parents) {
+      const parent = parents.find((p: { id: number }) => p.id === data.parentId);
+      if (parent) {
+        setSearchTerm(`${parent.firstName} ${parent.lastName}`);
+        setSelectedParent(parent.id);
+        setValue("parentId", parent.id.toString());
+      }
+    }
+  }, [data, parents, setValue]);
+  
 
   const handleSelectParent = (parent: {
     id: number;
@@ -202,6 +217,7 @@ const StudentForm = ({
             value={searchTerm}
             onChange={handleSearch}
             placeholder="Search for a parent"
+            // defaultValue={selectedParent}
           />
           {searchTerm && filteredParents.length > 0 && (
             <ul className="mt-2 max-h-60 overflow-y-auto bg-white border rounded-md shadow-lg">

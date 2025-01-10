@@ -1,35 +1,20 @@
-"use client";
-
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useFormState } from "react-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "../InputField";
-import Image from "next/image";
-import { Dispatch, SetStateAction } from "react";
+import { resultSchema, ResultSchema } from "@/lib/formValidationSchema";
+import { createResult, updateResult } from "@/lib/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
-const schema = z.object({
-  username: z
-    .string()
-    .min(5, { message: "Username must be at least 5 characters long" })
-    .max(20, { message: "Username must not be more than 20 characters long" }),
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(8, { message: "Password ahould be at least 8 character long" }),
-  firstName: z.string().min(3, { message: "First name is required" }),
-  lastName: z.string().min(3, { message: "Last name is required" }),
-
-  phone: z
-    .string()
-    .min(10, { message: "Phone number should be 10 digits!" })
-    .max(10, { message: "Phone number should be 10 digits" }),
-  address: z.string().min(3, { message: "At least 3 charcters long!" }),
-  birthday: z.date({ message: "Birthday is required" }),
-  sex: z.enum(["male", "female"], { message: "Sex is required" }),
-  img: z.instanceof(File, { message: "Image is required" }),
-});
-
-type Inputs = z.infer<typeof schema>;
+type Student = {
+  // id: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  classId: number;
+};
 
 const ResultForm = ({
   type,
@@ -40,129 +25,230 @@ const ResultForm = ({
   type: "create" | "update";
   data?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  relatedData?:any;
+  relatedData?: any;
 }) => {
+
+  
+
+  const formattedData = data
+    ? {
+        ...data,
+        examId:
+          data.examId ||
+          relatedData?.exams?.find(
+            (exam: { title: string }) => exam.title === data.title
+          )?.id ||
+          "",
+        assignmentId:
+          data.assignmentId ||
+          relatedData?.assignments?.find(
+            (assignment: { title: string }) => assignment.title === data.title
+          )?.id ||
+          "",
+          
+        
+      }
+    : {};
+
+
+
+    
+
+
+
+  console.log("formatted Data: ", formattedData);
+  console.log("Data: ", data);
+  console.log("relatedData: ", relatedData);
+
+  const [selectedExamId, setSelectedExamId] = useState(data?.examId || "");
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(
+    data?.assignmentId || ""
+  );
+
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    resolver: zodResolver(schema),
+    setValue,
+  } = useForm<ResultSchema>({
+    resolver: zodResolver(resultSchema),
+    defaultValues: formattedData,
+    
   });
 
+  const [state, formAction] = useFormState(
+    type === "create" ? createResult : updateResult,
+    {
+      success: false,
+      error: false,
+    }
+  );
+
+
+
+  useEffect(() => {
+    if (type === "update" && data) {
+      // Set the default values for examId, assignmentId, and studentId
+      setSelectedExamId(data.examId || "");
+      setSelectedAssignmentId(data.assignmentId || "");
+
+    }
+  }, [
+    type,
+    data,
+    setValue,
+    relatedData?.studentsByExam,
+    relatedData?.studentsByAssignment,
+  ]);
+
+  useEffect(() => {
+    if (selectedExamId && relatedData?.studentsByExam) {
+      const selectedExamStudents = relatedData.studentsByExam.find(
+        (mapping: { examId: number }) =>
+          mapping.examId === Number(selectedExamId)
+      );
+      setFilteredStudents(selectedExamStudents?.students || []);
+    } else if (selectedAssignmentId && relatedData?.studentsByAssignment) {
+      const selectedAssignmentStudents = relatedData.studentsByAssignment.find(
+        (mapping: { assignmentId: number }) =>
+          mapping.assignmentId === Number(selectedAssignmentId)
+      );
+      setFilteredStudents(selectedAssignmentStudents?.students || []);
+    } else {
+      setFilteredStudents(relatedData?.students || []); // Fallback to all students
+    }
+  }, [selectedExamId, selectedAssignmentId, relatedData]);
+
   const onSubmit = handleSubmit((data) => {
-    console.log("create");
+    console.log("data", data);
+    formAction(data);
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      toast(`Result has been ${type === "create" ? "created" : "updated"}!`);
+      setOpen(false);
+      router.refresh();
+    }
+  }, [state, router, type, setOpen]);
+
+  const { exams, assignments } = relatedData;
+  console.log("related student: ", relatedData.students);
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
-      <h1 className="text-xl font-semibold">Create a new Result</h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Authentication Info
-      </span>
+      <h1 className="text-xl font-semibold">
+        {type === "create" ? "Create a new result" : "Update the result"}
+      </h1>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Username"
-          name="username"
-          defaultValue={data?.username}
+          label="Score"
+          name="score"
+          type="number"
+          defaultValue={data?.score}
           register={register}
-          error={errors?.username}
+          error={errors?.score}
         />
 
-        <InputField
-          label="Email"
-          name="email"
-          type="email"
-          defaultValue={data?.email}
-          register={register}
-          error={errors?.email}
-        />
+        {data && (
+          <InputField
+            label="Id"
+            name="id"
+            defaultValue={data?.id}
+            register={register}
+            error={errors?.id}
+            hidden
+          />
+        )}
 
-        <InputField
-          label="Password"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
-          register={register}
-          error={errors?.password}
-        />
-      </div>
-
-      <span className="text-xs text-gray-400 font-medium">Personal Info</span>
-      <div className="flex justify-between flex-wrap gap-4">
-        <InputField
-          label="First Name"
-          name="firstName"
-          defaultValue={data?.firstName}
-          register={register}
-          error={errors?.firstName}
-        />
-        <InputField
-          label="Last Name"
-          name="lastName"
-          defaultValue={data?.lastName}
-          register={register}
-          error={errors?.lastName}
-        />
-        <InputField
-          label="Phone No"
-          name="phone"
-          defaultValue={data?.phone}
-          register={register}
-          error={errors?.phone}
-        />
-        <InputField
-          label="Address"
-          name="address"
-          defaultValue={data?.address}
-          register={register}
-          error={errors?.address}
-        />
        
-        <InputField
-          label="Birthday"
-          name="birthday"
-          defaultValue={data?.birthday}
-          register={register}
-          error={errors?.birthday}
-          type="date"
-        />
-      
 
-      <div className="flex flex-col gap-2 w-full md:w-1/4">
-        <label className="text-sm text-gray-500">Sex</label>
-        <select
-          className="ring-[1.5px] ring-gray-300 p-2  rounded-md text-sm w-full"
-          {...register("sex")}
-          defaultValue={data?.sex}
-        >
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-        {errors.sex?.message && (
-          <p className="text-xs text-red-400">
-            {errors.sex.message.toString()}
-          </p>
-        )}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-500">Exam</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("examId")}
+            defaultValue={formattedData?.examId || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedExamId(value !== "" ? Number(value) : "");
+
+            }}
+          >
+            <option value="">Select an Exam</option>
+            {exams?.map((exam: { id: number; title: string }) => (
+              <option key={exam.id} value={exam.id}>
+                {exam.title}
+              </option>
+            ))}
+          </select>
+          {errors.examId?.message && (
+            <p className="text-xs text-red-400">{errors.examId.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-500">Assignment</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("assignmentId")}
+            defaultValue={formattedData?.assignmentId || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedAssignmentId(value !== "" ? Number(value) : "");
+              
+            }}
+          >
+            <option value="">Select an Assignment</option>
+            {assignments?.map((assignment: { id: number; title: string }) => (
+              <option key={assignment.id} value={assignment.id}>
+                {assignment.title}
+              </option>
+            ))}
+          </select>
+          {errors.assignmentId?.message && (
+            <p className="text-xs text-red-400">
+              {errors.assignmentId.message}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-500">Student</label>
+          <select
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("studentId")}
+            defaultValue={formattedData?.studentId}
+          >
+            <option value="">Select student</option>
+            {filteredStudents.length > 0 ? (
+              filteredStudents.map((student) => (
+                <option key={student.studentId} value={student.studentId}>
+                  {student.firstName} {student.lastName}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>
+                No students available
+              </option>
+            )}
+          </select>
+          {errors.studentId?.message && (
+            <p className="text-xs text-red-400">{errors.studentId.message}</p>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-        <label className="text-sm text-gray-500 flex items-center gap-2 cursor-pointer" htmlFor="img">
-          <Image src="/upload.png" alt="" width={28} height={28} />
-          <span>Upload a photo</span>
-        </label>
-        <input type="file" id="img" {...register("img")} className="hidden" />
-        
-        {errors.img?.message && (
-          <p className="text-xs text-red-400">
-            {errors.img.message.toString()}
-          </p>
-        )}
-      </div>
-      </div>
+      {state.error && (
+        <span className="text-red-500">Something went wrong!</span>
+      )}
 
       <button className="bg-deepGreen text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}{" "}
+        {type === "create" ? "Create" : "Update"}
       </button>
     </form>
   );

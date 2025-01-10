@@ -3,18 +3,37 @@ const prisma = new PrismaClient();
 
 async function main() {
   // ADMIN
-  await prisma.admin.create({
-    data: {
-      id: "admin1",
-      username: "admin1",
+  // await prisma.admin.create({
+  //   data: {
+  //     id: "admin1",
+  //     username: "admin1",
+  //   },
+  // });
+  // await prisma.admin.create({
+  //   data: {
+  //     id: "admin2",
+  //     username: "admin2",
+  //   },
+  // });
+
+  await prisma.admin.upsert({
+    where: { id: "admin1" }, // Check if the admin1 already exists
+    update: {}, // No update necessary if the record already exists
+    create: {
+      id: "admin1", // Unique id
+      username: "admin1", // Username
     },
   });
-  await prisma.admin.create({
-    data: {
-      id: "admin2",
-      username: "admin2",
+
+  await prisma.admin.upsert({
+    where: { id: "admin2" }, // Check if the admin2 already exists
+    update: {}, // No update necessary if the record already exists
+    create: {
+      id: "admin2", // Unique id
+      username: "admin2", // Username
     },
   });
+
 
   // GRADE
   for (let i = 1; i <= 6; i++) {
@@ -76,6 +95,43 @@ async function main() {
   }
 
   // LESSON
+  // const formatTime = (date) => {
+  //   const hours = date.getHours().toString().padStart(2, "0");
+  //   const minutes = date.getMinutes().toString().padStart(2, "0");
+  //   return `${hours}:${minutes}`;
+  // };
+  // for (let i = 1; i <= 30; i++) {
+  //   await prisma.lesson.create({
+  //     data: {
+  //       name: `Lesson${i}`, 
+  //       day: Day[
+  //         Object.keys(Day)[
+  //           Math.floor(Math.random() * Object.keys(Day).length)
+  //         ] as keyof typeof Day
+  //       ], 
+  //       startTime: formatTime(startTime),
+  //     endTime: formatTime(endTime),
+  //       subjectId: (i % 10) + 1, 
+  //       classId: (i % 6) + 1, 
+  //       teacherId: `teacher${(i % 15) + 1}`, 
+  //     },
+  //   });
+  // }
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+  
+  
+  const teacherIds = await prisma.teacher.findMany({ select: { id: true } });
+  const subjects = await prisma.subject.findMany({ select: { id: true } });
+  const classes = await prisma.class.findMany({ select: { id: true } });
+  
+  const teacherIdArray = teacherIds.map((teacher) => teacher.id);
+  const subjectIds = subjects.map((subject) => subject.id);
+  const classIds = classes.map((classItem) => classItem.id);
+  
   for (let i = 1; i <= 30; i++) {
     await prisma.lesson.create({
       data: {
@@ -85,14 +141,15 @@ async function main() {
             Math.floor(Math.random() * Object.keys(Day).length)
           ] as keyof typeof Day
         ], 
-        startTime: new Date(new Date().setHours(new Date().getHours() + 1)), 
-        endTime: new Date(new Date().setHours(new Date().getHours() + 3)), 
-        subjectId: (i % 10) + 1, 
-        classId: (i % 6) + 1, 
-        teacherId: `teacher${(i % 15) + 1}`, 
+        startTime: formatTime(new Date(new Date().setHours(new Date().getHours() + 1))), 
+        endTime: formatTime(new Date(new Date().setHours(new Date().getHours() + 3))), 
+        subjectId: subjectIds[i % subjectIds.length], 
+        classId: classIds[i % classIds.length], 
+        teacherId: teacherIdArray[i % teacherIdArray.length], 
       },
     });
   }
+  
 
   // PARENT
   for (let i = 1; i <= 25; i++) {
