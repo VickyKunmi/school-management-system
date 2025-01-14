@@ -33,6 +33,7 @@ model Student {
   grade      Grade        @relation(fields: [gradeId], references: [id])
   attendance Attendance[]
   results    Result[]
+  exeats     Exeat[]
   birthday   DateTime
 }
 
@@ -54,6 +55,7 @@ model Teacher {
   classes     Class[]
   birthday    DateTime
   attendances TeacherAttendance[]
+  leaves      Leave[]
 }
 
 model Parent {
@@ -71,19 +73,18 @@ model Parent {
   students  Student[]
 }
 
-model TeacherAttendance { 
-  id         String   @id @default(uuid())
-  teacherId  String
-  date       DateTime
-  startTime  DateTime
-  endTime    DateTime
-  signInTime DateTime
+model TeacherAttendance {
+  id          String           @id @default(uuid())
+  teacherId   String
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  signInTime  DateTime
   signOutTime DateTime?
-  status     AttendanceStatus @default(Absent)
-  qrCode     String
-  expiresAt  DateTime
-   teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-
+  status      AttendanceStatus @default(Absent)
+  qrCode      String
+  expiresAt   DateTime
+  teacher     Teacher          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, date])
 }
@@ -170,7 +171,7 @@ model Attendance {
   id Int @id @default(autoincrement())
 
   date      DateTime
-  status    Boolean
+  status    Status
   studentId String
   student   Student  @relation(fields: [studentId], references: [id])
   lessonId  Int
@@ -183,7 +184,7 @@ model Event {
   description String
   startTime   DateTime
   endTime     DateTime
-
+  date        DateTime
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
 }
@@ -198,9 +199,53 @@ model Announcement {
   class   Class? @relation(fields: [classId], references: [id])
 }
 
+model Leave {
+  id        Int         @id @default(autoincrement())
+  teacherId String
+  teacher   Teacher     @relation(fields: [teacherId], references: [id])
+  type      String
+  reason    String?
+  startDate DateTime
+  endDate   DateTime
+  status    LeaveStatus @default(PENDING)
+  comments  String?
+  createdAt DateTime    @default(now())
+}
+
+model Exeat {
+  id        Int         @id @default(autoincrement())
+  studentId String
+  student   Student     @relation(fields: [studentId], references: [id])
+  type      String
+  reason    String?
+  startDate DateTime
+  endDate   DateTime
+  status    ExeatStatus @default(PENDING)
+  comments  String?
+  createdAt DateTime    @default(now())
+}
+
+
+enum ExeatStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum UserSex {
   MALE
   FEMALE
+}
+
+enum Status {
+  PRESENT
+  ABSENT
 }
 
 enum Day {
@@ -210,8 +255,6 @@ enum Day {
   THURSDAY
   FRIDAY
 }
-
-
 
 enum AttendanceStatus {
   Present

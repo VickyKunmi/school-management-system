@@ -1,8 +1,20 @@
 -- CreateEnum
+CREATE TYPE "ExeatStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "LeaveStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
 CREATE TYPE "UserSex" AS ENUM ('MALE', 'FEMALE');
 
 -- CreateEnum
+CREATE TYPE "Status" AS ENUM ('PRESENT', 'ABSENT');
+
+-- CreateEnum
 CREATE TYPE "Day" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY');
+
+-- CreateEnum
+CREATE TYPE "AttendanceStatus" AS ENUM ('Present', 'Absent');
 
 -- CreateTable
 CREATE TABLE "Admin" (
@@ -18,7 +30,6 @@ CREATE TABLE "Student" (
     "username" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
-    "middleName" TEXT,
     "email" TEXT,
     "phone" TEXT,
     "address" TEXT NOT NULL,
@@ -40,7 +51,6 @@ CREATE TABLE "Teacher" (
     "username" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
-    "middleName" TEXT,
     "email" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "address" TEXT NOT NULL,
@@ -59,7 +69,6 @@ CREATE TABLE "Parent" (
     "username" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
-    "middleName" TEXT,
     "email" TEXT,
     "phone" TEXT NOT NULL,
     "address" TEXT NOT NULL,
@@ -68,6 +77,22 @@ CREATE TABLE "Parent" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Parent_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TeacherAttendance" (
+    "id" TEXT NOT NULL,
+    "teacherId" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "signInTime" TIMESTAMP(3) NOT NULL,
+    "signOutTime" TIMESTAMP(3),
+    "status" "AttendanceStatus" NOT NULL DEFAULT 'Absent',
+    "qrCode" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "TeacherAttendance_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -83,7 +108,7 @@ CREATE TABLE "Class" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "capacity" INTEGER NOT NULL,
-    "supervisorId" TEXT NOT NULL,
+    "supervisorId" TEXT,
     "gradeId" INTEGER NOT NULL,
 
     CONSTRAINT "Class_pkey" PRIMARY KEY ("id")
@@ -102,8 +127,8 @@ CREATE TABLE "Lesson" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "day" "Day" NOT NULL,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
     "subjectId" INTEGER NOT NULL,
     "classId" INTEGER NOT NULL,
     "teacherId" TEXT NOT NULL,
@@ -148,7 +173,7 @@ CREATE TABLE "Result" (
 CREATE TABLE "Attendance" (
     "id" SERIAL NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "status" BOOLEAN NOT NULL,
+    "status" "Status" NOT NULL,
     "studentId" TEXT NOT NULL,
     "lessonId" INTEGER NOT NULL,
 
@@ -160,9 +185,10 @@ CREATE TABLE "Event" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "startDate" TIMESTAMP(3) NOT NULL,
-    "endtDate" TIMESTAMP(3) NOT NULL,
-    "classId" INTEGER NOT NULL,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "classId" INTEGER,
 
     CONSTRAINT "Event_pkey" PRIMARY KEY ("id")
 );
@@ -173,9 +199,39 @@ CREATE TABLE "Announcement" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "classId" INTEGER NOT NULL,
+    "classId" INTEGER,
 
     CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Leave" (
+    "id" SERIAL NOT NULL,
+    "teacherId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "reason" TEXT,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "status" "LeaveStatus" NOT NULL DEFAULT 'PENDING',
+    "comments" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Leave_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Exeat" (
+    "id" SERIAL NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "reason" TEXT,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "status" "ExeatStatus" NOT NULL DEFAULT 'PENDING',
+    "comments" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Exeat_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -215,6 +271,9 @@ CREATE UNIQUE INDEX "Parent_email_key" ON "Parent"("email");
 CREATE UNIQUE INDEX "Parent_phone_key" ON "Parent"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "TeacherAttendance_teacherId_date_key" ON "TeacherAttendance"("teacherId", "date");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 
 -- CreateIndex
@@ -239,7 +298,10 @@ ALTER TABLE "Student" ADD CONSTRAINT "Student_classId_fkey" FOREIGN KEY ("classI
 ALTER TABLE "Student" ADD CONSTRAINT "Student_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Class" ADD CONSTRAINT "Class_supervisorId_fkey" FOREIGN KEY ("supervisorId") REFERENCES "Teacher"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "TeacherAttendance" ADD CONSTRAINT "TeacherAttendance_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "Teacher"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Class" ADD CONSTRAINT "Class_supervisorId_fkey" FOREIGN KEY ("supervisorId") REFERENCES "Teacher"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Class" ADD CONSTRAINT "Class_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -275,10 +337,16 @@ ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_studentId_fkey" FOREIGN KEY 
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Event" ADD CONSTRAINT "Event_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Announcement" ADD CONSTRAINT "Announcement_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Announcement" ADD CONSTRAINT "Announcement_classId_fkey" FOREIGN KEY ("classId") REFERENCES "Class"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Leave" ADD CONSTRAINT "Leave_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "Teacher"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Exeat" ADD CONSTRAINT "Exeat_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_SubjectToTeacher" ADD CONSTRAINT "_SubjectToTeacher_A_fkey" FOREIGN KEY ("A") REFERENCES "Subject"("id") ON DELETE CASCADE ON UPDATE CASCADE;

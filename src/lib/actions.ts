@@ -9,9 +9,13 @@ import {
   AttendanceSchema,
   LessonSchema,
   ExamSchema,
-  lessonSchema,
   AssignmentSchema,
   ResultSchema,
+  PresencelogSchema,
+  LeaveSchema,
+  ExeatSchema,
+  EventSchema,
+  AnnouncementSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient, auth } from "@clerk/nextjs/server";
@@ -163,10 +167,10 @@ export const createTeacher = async (
 
     userId = user.id; // Save the Clerk-generated ID
 
-    // Create the Teacher record in Prisma using Clerk's user ID
+    
     const createdTeacher = await prisma.teacher.create({
       data: {
-        id: userId, // Use the Clerk-generated ID
+        id: userId, 
         username: data.username,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -1557,14 +1561,11 @@ export const createResult = async (
     const studentExists = await prisma.student.findUnique({
       where: { id: data.studentId },
     });
-    
+
     if (!studentExists) {
       console.error(`Student with ID ${data.studentId} does not exist.`);
       return { success: false, error: true, message: "Invalid student ID." };
     }
-
-    
-    
 
     await prisma.result.create({
       data: {
@@ -1576,19 +1577,12 @@ export const createResult = async (
     });
     console.log("Creating result with studentId: ", data.studentId);
 
-
     return { success: true, error: false };
   } catch (error) {
     console.error(error);
     return { success: false, error: true, message: "Failed to create result." };
   }
 };
-
-
-
-
-
-
 
 export const updateResult = async (
   currentState: CurrentState,
@@ -1619,16 +1613,14 @@ export const updateResult = async (
       }
     }
 
-
     const studentExists = await prisma.student.findUnique({
       where: { id: data.studentId },
     });
-    
+
     if (!studentExists) {
       console.error(`Student with ID ${data.studentId} does not exist.`);
       return { success: false, error: true, message: "Invalid student ID." };
     }
-
 
     await prisma.result.update({
       where: { id: data.id },
@@ -1637,7 +1629,7 @@ export const updateResult = async (
         studentId: data.studentId,
         // examId: data.examId,
         // assignmentId: data.assignmentId,
-        ...(data.examId ? { examId: data.examId } : {}), 
+        ...(data.examId ? { examId: data.examId } : {}),
         ...(data.assignmentId ? { assignmentId: data.assignmentId } : {}),
       },
     });
@@ -1685,5 +1677,743 @@ export const deleteResult = async (
   } catch (error) {
     console.error(error);
     return { success: false, error: true, message: "Failed to delete result." };
+  }
+};
+
+export const createPresencelog = async (
+  currentState: CurrentState,
+  data: PresencelogSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  try {
+    if (role === "teacher") {
+      // Check if the lesson belongs to the teacher
+      const relatedLesson = await prisma.lesson.findFirst({
+        where: {
+          id: data.lessonId,
+          teacherId: userId!,
+        },
+      });
+
+      // if (!relatedLesson) {
+      //   return { success: false, error: true, message: "Unauthorized action." };
+      // }
+
+      if (!relatedLesson) {
+        console.log("Unauthorized action: teacher does not own the lesson");
+        return { success: false, error: true, message: "Unauthorized action." };
+      }
+    }
+    const studentExists = await prisma.student.findUnique({
+      where: { id: data.studentId },
+    });
+
+    if (!studentExists) {
+      console.error(`Student with ID ${data.studentId} does not exist.`);
+      return { success: false, error: true, message: "Invalid student ID." };
+    }
+
+    // Create the attendance record
+    await prisma.attendance.create({
+      data: {
+        date: data.date,
+        status: data.status,
+        studentId: data.studentId,
+        lessonId: data.lessonId,
+      },
+    });
+
+    console.log("Log created: ", data);
+    console.log(
+      "Validating teacher authorization for lessonId:",
+      data.lessonId,
+      "and userId:",
+      userId
+    );
+    console.log(
+      "Checking student association for studentId:",
+      data.studentId,
+      "and lessonId:",
+      data.lessonId
+    );
+
+    return { success: true, error: false };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: true,
+      message: "Failed to create attendance.",
+    };
+  }
+};
+
+export const updatePresencelog = async (
+  currentState: CurrentState,
+  data: PresencelogSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  console.log("Create Result Payload: ", data);
+
+  try {
+    if (role === "teacher") {
+      // Check if the lesson belongs to the teacher
+      const relatedLesson = await prisma.lesson.findFirst({
+        where: {
+          id: data.lessonId,
+          teacherId: userId!,
+        },
+      });
+
+      if (!relatedLesson) {
+        console.log("Unauthorized action: teacher does not own the lesson");
+        return { success: false, error: true, message: "Unauthorized action." };
+      }
+    }
+
+    const studentExists = await prisma.student.findUnique({
+      where: { id: data.studentId },
+    });
+
+    if (!studentExists) {
+      console.error(`Student with ID ${data.studentId} does not exist.`);
+      return { success: false, error: true, message: "Invalid student ID." };
+    }
+
+    // Check if the attendance record exists for the given student and lesson
+    const existingAttendance = await prisma.attendance.findFirst({
+      where: {
+        studentId: data.studentId,
+        lessonId: data.lessonId,
+      },
+    });
+
+    if (!existingAttendance) {
+      console.error(
+        `No attendance record found for student ID ${data.studentId} and lesson ID ${data.lessonId}`
+      );
+      return {
+        success: false,
+        error: true,
+        message: "Attendance record not found.",
+      };
+    }
+
+    // Update the attendance record
+    await prisma.attendance.update({
+      where: {
+        id: existingAttendance.id,
+      },
+      data: {
+        status: data.status,
+        date: data.date,
+      },
+    });
+
+    console.log("Attendance log updated: ", data);
+    console.log(
+      "Validating teacher authorization for lessonId:",
+      data.lessonId,
+      "and userId:",
+      userId
+    );
+    console.log(
+      "Checking student association for studentId:",
+      data.studentId,
+      "and lessonId:",
+      data.lessonId
+    );
+
+    return { success: true, error: false };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: true,
+      message: "Failed to update attendance.",
+    };
+  }
+};
+
+export const deletePresencelog = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  try {
+    if (role === "teacher") {
+      // Check if the teacher owns the lesson related to this attendance log
+      const relatedLesson = await prisma.lesson.findFirst({
+        where: {
+          attendance: {
+            some: { id: parseInt(id) }, // Ensure the attendance log belongs to the teacher's lesson
+          },
+          teacherId: userId!,
+        },
+      });
+
+      if (!relatedLesson) {
+        console.log("Unauthorized action: teacher does not own the lesson.");
+        return { success: false, error: true, message: "Unauthorized action." };
+      }
+    }
+
+    // Check if the attendance log exists
+    const attendanceLog = await prisma.attendance.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!attendanceLog) {
+      console.error(`Attendance log with ID ${id} does not exist.`);
+      return {
+        success: false,
+        error: true,
+        message: "Attendance log not found.",
+      };
+    }
+
+    // Perform the deletion
+    await prisma.attendance.delete({
+      where: { id: parseInt(id) },
+    });
+
+    console.log("Attendance log deleted: ", id);
+    return { success: true, error: false };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: true,
+      message: "Failed to delete attendance.",
+    };
+  }
+};
+
+export const createLeave = async (
+  currentState: CurrentState,
+  data: LeaveSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  console.log("Attempting to create leave...");
+  console.log("Data received by backend:", data); // Log the incoming data
+
+  // Check role before proceeding
+  console.log("Role from session:", role);
+
+  try {
+    // Ensure the logged-in user is a teacher
+    if (role !== "teacher") {
+      console.log("Unauthorized action: Only teachers can apply for leave.");
+      return { success: false, error: true, message: "Unauthorized action." };
+    }
+
+    // Fetch teacher data to verify their identity
+    const currentTeacher = await prisma.teacher.findFirst({
+      where: { id: userId! },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    if (!currentTeacher) {
+      console.log("Teacher not found in database.");
+      return { success: false, error: true, message: "Teacher not found." };
+    }
+
+    // Log the leave creation data
+    // console.log("Creating leave with the following details:", {
+    //   teacherId: data.teacherId,
+    //   type: data.type,
+    //   reason: data.reason,
+    //   startDate: data.startDate,
+    //   endDate: data.endDate,
+    //   comments: data.comments,
+    // });
+
+    // Create the leave record
+    const leave = await prisma.leave.create({
+      data: {
+        teacherId: data.teacherId,
+        type: data.type,
+        reason: data.reason,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        status: "PENDING", // Default status
+        comments: data.comments,
+      },
+    });
+
+    console.log("Leave created successfully:", leave);
+
+    return { success: true, error: false, leave };
+  } catch (error) {
+    console.error("Error creating leave:", error);
+    return { success: false, error: true, message: "Failed to create leave." };
+  }
+};
+
+export const updateLeave = async (
+  currentState: CurrentState,
+  data: LeaveSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  console.log("Attempting to update leave...");
+  console.log("Data received by backend:", data); // Log the incoming data
+
+  // Check if the user has admin role
+  console.log("Role from session:", role);
+  if (role !== "admin") {
+    console.log("Unauthorized action: Only admins can update leave.");
+    return { success: false, error: true, message: "Unauthorized action." };
+  }
+
+  try {
+    // Fetch the leave record to get the teacherId
+    const existingLeave = await prisma.leave.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!existingLeave) {
+      console.log("Leave record not found.");
+      return {
+        success: false,
+        error: true,
+        message: "Leave record not found.",
+      };
+    }
+
+    // Assign teacherId from the original leave
+    const updatedLeaveData = {
+      teacherId: existingLeave.teacherId, // Automatically assign teacherId from the existing leave
+      type: data.type,
+      reason: data.reason,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      status: data.status || existingLeave.status, // If status is not provided, retain the current one
+      comments: data.comments,
+    };
+
+    // Update the leave record
+    const updatedLeave = await prisma.leave.update({
+      where: { id: data.id },
+      data: updatedLeaveData,
+    });
+
+    console.log("Leave updated successfully:", updatedLeave);
+
+    return { success: true, error: false, leave: updatedLeave };
+  } catch (error) {
+    console.error("Error updating leave:", error);
+    return { success: false, error: true, message: "Failed to update leave." };
+  }
+};
+
+export const deleteLeave = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const leaveId = data.get("id") as string;
+
+  // Authenticate the user and fetch session details
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  console.log("Attempting to delete leave...");
+
+  try {
+    // Check if the user has an admin role
+    if (role !== "admin") {
+      console.log(
+        "Unauthorized action: Only admins can delete leave requests."
+      );
+      return { success: false, error: true, message: "Unauthorized action." };
+    }
+
+    // Verify that the leave request exists
+    const leave = await prisma.leave.findUnique({
+      where: { id: parseInt(leaveId) },
+    });
+
+    if (!leave) {
+      console.log("Leave request not found.");
+      return {
+        success: false,
+        error: true,
+        message: "Leave request not found.",
+      };
+    }
+
+    // Log the leave details being deleted
+    console.log("Deleting leave with the following details:", leave);
+
+    // Delete the leave request
+    await prisma.leave.delete({
+      where: { id: parseInt(leaveId) },
+    });
+
+    console.log("Leave request deleted successfully.");
+
+    return {
+      success: true,
+      error: false,
+      message: "Leave request deleted successfully.",
+    };
+  } catch (error) {
+    console.error("Error deleting leave request:", error);
+    return {
+      success: false,
+      error: true,
+      message: "Failed to delete leave request.",
+    };
+  }
+};
+
+export const createExeat = async (
+  currentState: CurrentState,
+  data: ExeatSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  try {
+    // Ensure the logged-in user is a student
+    if (role !== "student") {
+      console.log("Unauthorized action: Only students can apply for exeat.");
+      return { success: false, error: true, message: "Unauthorized action." };
+    }
+
+    // Fetch student data to verify their identity
+    const currentStudent = await prisma.student.findFirst({
+      where: { id: userId! },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    if (!currentStudent) {
+      console.log("Student not found in database.");
+      return { success: false, error: true, message: "Student not found." };
+    }
+
+    // Log the leave creation data
+    // console.log("Creating leave with the following details:", {
+    //   studentId: data.studentId,
+    //   type: data.type,
+    //   reason: data.reason,
+    //   startDate: data.startDate,
+    //   endDate: data.endDate,
+    //   comments: data.comments,
+    // });
+
+    // Create the leave record
+    const exeat = await prisma.exeat.create({
+      data: {
+        studentId: data.studentId,
+        type: data.type,
+        reason: data.reason,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        status: "PENDING", // Default status
+        comments: data.comments,
+      },
+    });
+
+    console.log("Leave created successfully:", exeat);
+
+    return { success: true, error: false, exeat };
+  } catch (error) {
+    console.error("Error creating leave:", error);
+    return { success: false, error: true, message: "Failed to create leave." };
+  }
+};
+
+export const updateExeat = async (
+  currentState: CurrentState,
+  data: ExeatSchema
+) => {
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  if (role !== "admin") {
+    console.log("Unauthorized action: Only admins can update exeat.");
+    return { success: false, error: true, message: "Unauthorized action." };
+  }
+
+  try {
+    // Fetch the leave record to get the teacherId
+    const existingExeat = await prisma.exeat.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!existingExeat) {
+      console.log("Leave record not found.");
+      return {
+        success: false,
+        error: true,
+        message: "Leave record not found.",
+      };
+    }
+
+    // Assign teacherId from the original leave
+    const updatedExeatData = {
+      studentId: existingExeat.studentId, // Automatically assign teacherId from the existing ExeexistingExeat
+      type: data.type,
+      reason: data.reason,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      status: data.status || existingExeat.status, // If status is not provided, retain the current one
+      comments: data.comments,
+    };
+
+    // Update the Exeat record
+    const updatedExeat = await prisma.exeat.update({
+      where: { id: data.id },
+      data: updatedExeatData,
+    });
+
+    console.log("Exeat updated successfully:", updatedExeat);
+
+    return { success: true, error: false, exeat: updatedExeat };
+  } catch (error) {
+    console.error("Error updating exeat:", error);
+    return { success: false, error: true, message: "Failed to update exeat." };
+  }
+};
+
+export const deleteExeat = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const exeatId = data.get("id") as string;
+
+  // Authenticate the user and fetch session details
+  const { userId, sessionClaims } = await auth();
+  const role = (sessionClaims?.metadata as { role?: string })?.role;
+
+  try {
+    // Check if the user has an admin role
+    if (role !== "admin") {
+      console.log(
+        "Unauthorized action: Only admins can delete exeat requests."
+      );
+      return { success: false, error: true, message: "Unauthorized action." };
+    }
+
+    // Verify that the exeat request exists
+    const exeat = await prisma.exeat.findUnique({
+      where: { id: parseInt(exeatId) },
+    });
+
+    if (!exeat) {
+      console.log("Exeat request not found.");
+      return {
+        success: false,
+        error: true,
+        message: "Exeat request not found.",
+      };
+    }
+
+    // Log the exeat details being deleted
+    console.log("Deleting exeat with the following details:", exeat);
+
+    // Delete the leave request
+    await prisma.exeat.delete({
+      where: { id: parseInt(exeatId) },
+    });
+
+    console.log("Exeat request deleted successfully.");
+
+    return {
+      success: true,
+      error: false,
+      message: "Exeat request deleted successfully.",
+    };
+  } catch (error) {
+    console.error("Error deleting exeat request:", error);
+    return {
+      success: false,
+      error: true,
+      message: "Failed to delete exeat request.",
+    };
+  }
+};
+
+export const createEvent = async (
+  currentState: CurrentState,
+  data: EventSchema
+) => {
+  try {
+    // Convert the startTime and endTime to valid Date objects (if they're in HH:mm format)
+    const startTime = new Date(data.date);
+    const [hours, minutes] = data.startTime.split(":").map(Number);
+    startTime.setHours(hours, minutes, 0, 0); // Set the hours and minutes
+
+    const endTime = new Date(data.date);
+    const [endHours, endMinutes] = data.endTime.split(":").map(Number);
+    endTime.setHours(endHours, endMinutes, 0, 0); // Set the hours and minutes
+
+    await prisma.event.create({
+      data: {
+        description: data.description,
+        classId: data.classId || null,
+        startTime: startTime,
+        endTime: endTime,
+        title: data.title,
+        date: data.date,
+      },
+    });
+
+    // Add revalidatePath or any other post-creation logic if needed
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+
+export const updateEvent = async (
+  currentState: CurrentState,
+  data: EventSchema
+) => {
+  try {
+    // Convert the startTime and endTime to valid Date objects (if they're in HH:mm format)
+    const startTime = new Date(data.date);
+    const [hours, minutes] = data.startTime.split(":").map(Number);
+    startTime.setHours(hours, minutes, 0, 0); // Set the hours and minutes
+
+    const endTime = new Date(data.date);
+    const [endHours, endMinutes] = data.endTime.split(":").map(Number);
+    endTime.setHours(endHours, endMinutes, 0, 0); // Set the hours and minutes
+
+    // Prepare the updated data
+    const updatedData = {
+      ...data,
+      classId: data.classId || null,
+      startTime, // Updated startTime as Date
+      endTime,   // Updated endTime as Date
+    };
+
+    await prisma.event.update({
+      where: {
+        id: data.id,
+      },
+      data: updatedData,
+    });
+
+    // Add revalidatePath or any other post-update logic if needed
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+export const deleteEvent = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+  try {
+    await prisma.event.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    // Add revalidatePath or any other post-deletion logic if needed
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+
+
+
+
+
+export const createAnnouncement = async (
+  currentState: CurrentState,
+  data: AnnouncementSchema
+) => {
+  try {
+
+    await prisma.announcement.create({
+      data: {
+        description: data.description,
+        classId: data.classId || null,
+        title: data.title,
+        date: data.date,
+      },
+    });
+
+    
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+
+export const updateAnnouncement = async (
+  currentState: CurrentState,
+  data: AnnouncementSchema
+) => {
+  try {
+    await prisma.announcement.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        ...data,
+        classId: data.classId || null, // Ensure classId is null if undefined
+      },
+    });
+
+    // Add revalidatePath or any other post-update logic if needed
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+
+
+export const deleteAnnouncement = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+  try {
+    await prisma.announcement.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    // Add revalidatePath or any other post-deletion logic if needed
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
   }
 };

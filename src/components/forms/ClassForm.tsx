@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import {
   classSchema,
   ClassSchema,
-  subjectSchema,
 } from "@/lib/formValidationSchema";
 import { toast } from "react-toastify";
 
@@ -94,37 +93,9 @@ const ClassForm = ({
           />
         )}
 
-        <div className="flex flex-col gap-2 w-full md:w-2/3">
-          <label className="text-sm text-gray-500">Supervisor</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("supervisorId")}
-            defaultValue={data?.teachers}
-          >
-            {teachers.map(
-              (teacher: {
-                id: string;
-                firstName: string;
+        
+        
 
-                lastName: string;
-              }) => (
-                <option
-                  value={teacher.id}
-                  key={teacher.id}
-                  selected={data && teacher.id === data.supervisorId}
-                >
-                  {" "}
-                  {teacher.firstName + " " + teacher.lastName}{" "}
-                </option>
-              )
-            )}
-          </select>
-          {errors.supervisorId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.supervisorId.message.toString()}
-            </p>
-          )}
-        </div>
 
         <div className="flex flex-col gap-2 w-full md:w-2/3">
           <label className="text-sm text-gray-500">Grade</label>

@@ -34,10 +34,7 @@ export const teacherSchema = z.object({
     .regex(/[A-Z]/, "Password must include at least one uppercase letter")
     .regex(/[a-z]/, "Password must include at least one lowercase letter")
     .regex(/\d/, "Password must include at least one number")
-    .regex(
-      /[!@#$%^&*]/,
-      "Password must include at least one special character"
-    )
+    .regex(/[!@#$%^&*]/, "Password must include at least one special character")
     .optional()
     .or(z.literal("")),
   firstName: z.string().min(3, { message: "First name is required" }),
@@ -136,45 +133,50 @@ export const attendanceSchema = z.object({
   endTime: z.coerce.date({ message: "End time is required" }),
   signInTime: z.coerce.date(),
   signOutTime: z.coerce.date().nullable(),
-  status: z
-    .enum(["Present", "Absent"], {
-      message: "Status must be either 'PRESENT' or 'ABSENT'",
-    }),
+  status: z.enum(["Present", "Absent"], {
+    message: "Status must be either 'PRESENT' or 'ABSENT'",
+  }),
   qrCode: z.string().min(1, { message: "QR Code is required" }),
   expiresAt: z.coerce.date({ message: "Expiration time is required" }),
 });
 
 export type AttendanceSchema = z.infer<typeof attendanceSchema>;
 
+export const lessonSchema = z
+  .object({
+    id: z.coerce.number().optional(),
+    name: z
+      .string()
+      .min(2, { message: "Lesson name must be at least 2 characters long" }),
+    day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], {
+      message: "Day must be a valid weekday",
+    }),
+    startTime: z.string().regex(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "Start time must be in HH:mm format",
+    }),
+    endTime: z.string().regex(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "End time must be in HH:mm format",
+    }),
 
-export const lessonSchema = z.object({
-  id: z.coerce.number().optional(), 
-  name: z.string().min(2, { message: "Lesson name must be at least 2 characters long" }),
-  day: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"], {
-    message: "Day must be a valid weekday",
-  }),
-  startTime: z.string().regex(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/, {
-    message: "Start time must be in HH:mm format",
-  }),
-  endTime: z.string().regex(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/, {
-    message: "End time must be in HH:mm format",
-  }),
-  
-  subjectId: z.coerce.number().min(1, { message: "Subject ID is required and must be valid" }),
-  classId: z.coerce.number().min(1, { message: "Class ID is required and must be valid" }),
-  teacherId: z.string().min(1, { message: "Teacher ID is required and must be valid" }),
-  exams: z.array(z.string()).optional(), 
-  assignments: z.array(z.string()).optional(), 
-  attendance: z.array(z.string()).optional(),
-})
+    subjectId: z.coerce
+      .number()
+      .min(1, { message: "Subject ID is required and must be valid" }),
+    classId: z.coerce
+      .number()
+      .min(1, { message: "Class ID is required and must be valid" }),
+    teacherId: z
+      .string()
+      .min(1, { message: "Teacher ID is required and must be valid" }),
+    exams: z.array(z.string()).optional(),
+    assignments: z.array(z.string()).optional(),
+    attendance: z.array(z.string()).optional(),
+  })
   .refine((data) => data.startTime < data.endTime, {
     message: "Start time must be earlier than end time",
-    path: ["startTime"], 
+    path: ["startTime"],
   });
 
 export type LessonSchema = z.infer<typeof lessonSchema>;
-
-
 
 export const examSchema = z.object({
   id: z.coerce.number().optional(),
@@ -186,9 +188,6 @@ export const examSchema = z.object({
 
 export type ExamSchema = z.infer<typeof examSchema>;
 
-
-
-
 export const assignmentSchema = z.object({
   id: z.coerce.number().optional(),
   title: z.string().min(1, { message: "Title name is required!" }),
@@ -199,8 +198,6 @@ export const assignmentSchema = z.object({
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;
 
-
-
 export const resultSchema = z.object({
   id: z.coerce.number().optional(),
   score: z.coerce.number().min(0, { message: "Score cannot be less than 0." }),
@@ -210,3 +207,84 @@ export const resultSchema = z.object({
 });
 
 export type ResultSchema = z.infer<typeof resultSchema>;
+
+export const presencelogSchema = z.object({
+  id: z.coerce.number().optional(),
+  date: z.coerce.date({ message: "Date is required" }),
+  // status: z.boolean({ message: "Status is required" }),
+  status: z.enum(["PRESENT", "ABSENT"], {
+    message: "Status must be present or absent",
+  }),
+  studentId: z.string().min(1, { message: "Student ID is required!" }),
+  // lessonId: z.coerce.number().optional(),
+  lessonId: z.coerce.number().min(1, { message: "Lesson ID is required!" }),
+});
+
+export type PresencelogSchema = z.infer<typeof presencelogSchema>;
+
+export const leaveSchema = z.object({
+  id: z.coerce.number().optional(),
+  teacherId: z.string().min(1, { message: "Teacher ID is required!" }),
+  type: z.string().min(1, { message: "Leave type is required is required!" }),
+  reason: z.string().optional(),
+  startDate: z.coerce.date({ message: "Start Date is required" }),
+  endDate: z.coerce.date({ message: "End Date is required" }),
+  status: z
+    .enum(["PENDING", "APPROVED", "REJECTED"], {
+      message: "Status must be approved, pending, or rejected",
+    })
+    .default("PENDING"),
+  comments: z.string().optional(),
+});
+
+export type LeaveSchema = z.infer<typeof leaveSchema>;
+
+
+
+
+
+export const exeatSchema = z.object({
+  id: z.coerce.number().optional(),
+  studentId: z.string().min(1, { message: "Student ID is required!" }),
+  type: z.string().min(1, { message: "Exeat type is required is required!" }),
+  reason: z.string().optional(),
+  startDate: z.coerce.date({ message: "Start Date is required" }),
+  endDate: z.coerce.date({ message: "End Date is required" }),
+  status: z
+    .enum(["PENDING", "APPROVED", "REJECTED"], {
+      message: "Status must be approved, pending, or rejected",
+    })
+    .default("PENDING"),
+  comments: z.string().optional(),
+});
+
+export type ExeatSchema = z.infer<typeof exeatSchema>;
+
+
+
+
+
+
+export const eventSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required is required!" }),
+  classId: z.coerce.number().optional(),
+  startTime: z.string().min(1, { message: "Start Time is required" }),
+  date: z.coerce.date({ message: "Date is required" }),
+  endTime: z.string().min(1, { message: "End Time is required" }),
+});
+
+export type EventSchema = z.infer<typeof eventSchema>;
+
+
+
+export const announcementSchema = z.object({
+  id: z.coerce.number().optional(),
+  title: z.string().min(1, { message: "Title is required!" }),
+  description: z.string().min(1, { message: "Description is required is required!" }),
+  date: z.coerce.date({ message: "Date is required" }),
+  classId: z.coerce.number().optional(),
+});
+
+export type AnnouncementSchema = z.infer<typeof announcementSchema>;

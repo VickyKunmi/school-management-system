@@ -40,9 +40,9 @@ const AttendanceChartContainer = async () => {
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
       const dayName = daysOfWeek[dayOfWeek - 1];
 
-      if (item.status) {
+      if (item.status === "PRESENT") {
         attendanceMap[dayName].present += 1;
-      } else {
+      } else if (item.status === "ABSENT") {
         attendanceMap[dayName].absent += 1;
       }
     }

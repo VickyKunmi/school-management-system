@@ -1,3 +1,4 @@
+import FormContainer from "@/components/FormContainer";
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -64,18 +65,23 @@ const EventList = async ({
       <td className="flex items-center gap-4 p-4">{item.title}</td>
 
       <td>{item.class?.name || "-"}</td>
+
       <td className="hidden md:table-cell">
-        {new Intl.DateTimeFormat("en-GH").format(item.startTime)}{" "}
+        {new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Accra" }).format(
+          item.startTime
+        )}
       </td>
       <td className="hidden md:table-cell">
-        {item.startTime.toLocaleTimeString("en-GH", {
+        {item.startTime.toLocaleTimeString("en-GB", {
+          timeZone: "Africa/Accra",
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
         })}
       </td>
       <td className="hidden md:table-cell">
-        {item.endTime.toLocaleTimeString("en-GH", {
+        {item.endTime.toLocaleTimeString("en-GB", {
+          timeZone: "Africa/Accra",
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -87,8 +93,8 @@ const EventList = async ({
           <Link href={`/list/teacher/${item.id}`}></Link>
           {role === "admin" && (
             <>
-              <FormModal type="update" table="event" data={item} />
-              <FormModal type="delete" table="event" id={item.id} />
+              <FormContainer type="update" table="event" data={item} />
+              <FormContainer type="delete" table="event" id={item.id} />
             </>
           )}
         </div>
@@ -117,24 +123,30 @@ const EventList = async ({
       }
     }
   }
-  
+
   // Role conditions for teacher, student, or parent
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: currentUserId! } } },
     student: { students: { some: { id: currentUserId! } } },
     parent: { students: { some: { parentId: currentUserId! } } },
   };
-  
 
+  // query.OR = [
+  //   { classId: null },
+  //   {
+  //     class: roleConditions[role as keyof typeof roleConditions] || {},
+  //   },
+  // ];
 
-  query.OR = [
-    { classId: null },
-    {
-      class: roleConditions[role as keyof typeof roleConditions] || {},
-    },
-  ];
-  
-  
+  if (role !== "admin") {
+    query.OR = [
+      { classId: null },
+      {
+        class: roleConditions[role as keyof typeof roleConditions] || {},
+      },
+    ];
+  }
+
   // Fetch the events
   const [data, count] = await prisma.$transaction([
     prisma.event.findMany({
@@ -149,7 +161,6 @@ const EventList = async ({
       where: query,
     }),
   ]);
-  
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -165,7 +176,7 @@ const EventList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal type="create" table="event" />}
+            {role === "admin" && <FormContainer type="create" table="event" />}
           </div>
         </div>
       </div>

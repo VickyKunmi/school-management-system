@@ -1,3 +1,4 @@
+import FormContainer from "@/components/FormContainer";
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -64,8 +65,8 @@ const AnnouncementList = async ({
           <Link href={`/list/teacher/${item.id}`}></Link>
           {role === "admin" && (
             <>
-              <FormModal type="update" table="announcement" data={item} />
-              <FormModal type="delete" table="announcement" id={item.id} />
+              <FormContainer type="update" table="announcement" data={item} />
+              <FormContainer type="delete" table="announcement" id={item.id} />
             </>
           )}
         </div>
@@ -102,12 +103,14 @@ const AnnouncementList = async ({
     parent: { students: { some: { parentId: currentUserId! } } },
   };
 
-  query.OR = [
-    { classId: null },
-    {
-      class: roleConditions[role as keyof typeof roleConditions] || {},
-    },
-  ];
+  if (role !== "admin") {
+    query.OR = [
+      { classId: null },
+      {
+        class: roleConditions[role as keyof typeof roleConditions] || {},
+      },
+    ];
+  }
 
   const [data, count] = await prisma.$transaction([
     prisma.announcement.findMany({
@@ -140,7 +143,7 @@ const AnnouncementList = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {role === "admin" && (
-              <FormModal type="create" table="announcement" />
+              <FormContainer type="create" table="announcement" />
             )}
           </div>
         </div>

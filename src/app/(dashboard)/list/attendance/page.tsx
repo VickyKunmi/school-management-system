@@ -1,199 +1,3 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import QRCode from "qrcode";
-// import Image from "next/image";
-// import Table from "@/components/Table";
-
-// import { fetchTeacherAndAttendance } from "@/lib/actions";
-// import { useAuth } from "@clerk/nextjs";
-// import { auth } from "@clerk/nextjs/server";
-
-
-// type Attendance = {
-//   id: string;
-//   date: Date;
-//   startTime: Date;
-//   endTime: Date;
-//   signInTime: Date;
-//   signOutTime: Date | null;
-//   status: string;
-//   // teacherId: string;
-// };
-
-// type Teacher = {
-//   id: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   img: string;
-// };
-
-// const columns = [
-//   {
-//     header: "Date",
-//     accessor: "date",
-//   },
-//   {
-//     header: "Sign In Time",
-//     accessor: "signInTime",
-//   },
-//   {
-//     header: "Sign Out Time",
-//     accessor: "signOutTime",
-//     className: "hidden md:table-cell",
-//   },
-
-//   {
-//     header: "Status",
-//     accessor: "status",
-//   },
-// ];
-
-// const Attendance = () => {
-//   const { userId } = useAuth();
-//   const [qrCode, setQrCode] = useState("");
-//   const [teacher, setTeacher] = useState<Teacher | null>(null);
-//   // const [teacherId, setTeacherId] = useState<string | null>(null);
-//   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
-//   const [loading, setLoading] = useState<boolean>(false);
-//   const [error, setError] = useState<string | null>(null);
-//   // const [role, setRole] = useState("");
-//   const [role, setRole] = useState<string | undefined>(undefined);
-
-
-
-// useEffect(() => {
-//   const fetchData = async () => {
-//     try {
-//       if (!userId) {
-//         throw new Error("User is not authenticated");
-//       }
-  
-//       const { teacher, attendanceData, role } = await fetchTeacherAndAttendance(userId);
-//       setTeacher(teacher);
-//       setAttendanceData(attendanceData);
-//       setRole(role); // Make sure to set the role
-  
-//     }catch (err: unknown) {
-//       if (err instanceof Error) {
-//         setError(err.message || "Failed to load data. Please try again.");
-//       } else {
-//         setError("An unknown error occurred.");
-//       }
-//     }
-    
-//   };
-  
-
-//   fetchData();
-// }, [userId]);
-
-
-
-
-//   const generateQRCode = async (
-//     type: "signIn" | "signOut",
-//     teacherId: string
-//   ) => {
-//     try {
-//       setLoading(true);
-//       setError(null);
-
-//       const qrData = JSON.stringify({
-//         type,
-//         teacherId,
-//         timestamp: new Date().toISOString(),
-//         uniqueId: crypto.randomUUID(),
-//       });
-//       const generatedQR = await QRCode.toDataURL(qrData);
-//       setQrCode(generatedQR);
-//     } catch (err) {
-//       console.error("Error generating QR code", err);
-//       setError("Failed to generate QR code. Please try again.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const renderRow = (item: Attendance) => {
-//     const date = new Date(item.date);
-//     const signInTime = new Date(item.signInTime);
-//     const signOutTime = item.signOutTime ? new Date(item.signOutTime) : null;
-
-//     // const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown Teacher";
-
-//     return (
-//       <tr
-//         key={item.id}
-//         className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-//       >
-//         <td className="flex items-center gap-4 p-4">
-//           {role === "admin" && (
-//             <h3 className="font-semibold">
-//               {teacher?.firstName} {teacher?.lastName}
-//             </h3>
-//           )}
-//           {/* <h3 className="font-semibold">{teacherName}</h3> */}
-//         </td>
-//         <td className="flex items-center gap-4 p-4">
-//           <h3 className="font-semibold">{date.toLocaleDateString()}</h3>
-//         </td>
-//         <td>{signInTime.toLocaleTimeString()}</td>
-//         <td className="hidden md:table-cell">
-//           {signOutTime ? signOutTime.toLocaleTimeString() : "N/A"}
-//         </td>
-//         <td>{item.status}</td>
-//       </tr>
-//     );
-//   };
-
-//   if (loading) {
-//     return <div>Loading...</div>;
-//   }
-
-//   if (error) {
-//     return <div>Error: {error}</div>;
-//   }
-
-//   return (
-//     <div className="p-4">
-//       {/* TOP BUTTONS */}
-
-
-//       {role !== "admin" && (
-//         <div className="flex gap-5 items-center justify-between">
-//           <button
-//             onClick={() => generateQRCode("signIn", teacher?.id!)}
-//             className="bg-amber-500 text-white p-2 rounded-md"
-//           >
-//             Sign In Code
-//           </button>
-//           <button
-//             onClick={() => generateQRCode("signOut", teacher?.id!)}
-//             className="bg-deepGreen text-white p-2 rounded-md"
-//           >
-//             Sign Out Code
-//           </button>
-//         </div>
-//       )}
-
-//       {qrCode && (
-//         <div className="mt-5">
-//           <Image width={500} height={500} src={qrCode} alt="QR Code" />{" "}
-//         </div>
-//       )}
-
-//       <div className="">
-//         <Table columns={columns} renderRow={renderRow} data={attendanceData} />
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Attendance;
-
-
 
 "use client";
 
@@ -204,6 +8,7 @@ import Table from "@/components/Table";
 
 import { fetchTeacherAndAttendance } from "@/lib/actions";
 import { useAuth } from "@clerk/nextjs";
+import { TeacherAttendance } from "@prisma/client";
 
 type Attendance = {
   id: string;
@@ -215,6 +20,10 @@ type Attendance = {
   status: string;
   teacher: {firstName: string; lastName: string}
 };
+
+// type AttendanceList = TeacherAttendance & {teacher: Teacher}
+
+
 
 type Teacher = {
   id: string;
@@ -327,6 +136,9 @@ const Attendance = () => {
       </tr>
     );
   };
+
+
+  
 
   if (loading) {
     return <div>Loading...</div>;

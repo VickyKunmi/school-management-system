@@ -5,11 +5,16 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormState } from "react-dom";
 import {
+  deleteAnnouncement,
   deleteAssignment,
   deleteClass,
+  deleteEvent,
   deleteExam,
+  deleteExeat,
+  deleteLeave,
   deleteLesson,
   deleteParent,
+  deletePresencelog,
   deleteResult,
   deleteStudent,
   deleteSubject,
@@ -30,11 +35,11 @@ const deleteActionMap = {
   assignment: deleteAssignment,
   result: deleteResult,
   attendance: deleteSubject,
-  event: deleteSubject,
-  announcement: deleteSubject,
-  // event: deleteSubject,
-  leave: deleteSubject,
-  exeat: deleteSubject,
+  event: deleteEvent,
+  announcement: deleteAnnouncement,
+  presencelog: deletePresencelog,
+  leave: deleteLeave,
+  exeat: deleteExeat,
 };
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
   loading: () => <h1>Loading...</h1>,
@@ -84,6 +89,10 @@ const AnnouncementForm = dynamic(() => import("./forms/AnnouncementForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
+const PresencelogForm = dynamic(() => import("./forms/PresencelogForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+
 const ExeatForm = dynamic(() => import("./forms/ExeatForm"), {
   loading: () => <h1>Loading...</h1>,
 });
@@ -98,10 +107,10 @@ const forms: {
 } = {
   teacher: (setOpen, type, data, relatedData) => (
     <TeacherForm
-    type={type}
-    data={data}
-    setOpen={setOpen}
-    relatedData={relatedData}
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
     />
   ),
   student: (setOpen, type, data, relatedData) => (
@@ -145,7 +154,7 @@ const forms: {
       relatedData={relatedData}
     />
   ),
- 
+
   exam: (setOpen, type, data, relatedData) => (
     <ExamForm
       type={type}
@@ -180,6 +189,15 @@ const forms: {
   ),
   announcement: (setOpen, type, data, relatedData) => (
     <AnnouncementForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+
+  presencelog: (setOpen, type, data, relatedData) => (
+    <PresencelogForm
       type={type}
       data={data}
       setOpen={setOpen}
@@ -237,7 +255,7 @@ const FormModal = ({
 
     return type === "delete" && id ? (
       <form action={formAction} className="p-4 flex flex-col gap-4">
-        <input type="text | number" name="id" value={id} hidden />
+        <input type="text | number" name="id" defaultValue={id} hidden />
         <span className="text-center font-medium">
           Are you sure you want to delete this {table}?
         </span>

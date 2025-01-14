@@ -46,9 +46,9 @@ const ResultForm = ({
       }
     : {};
 
-  console.log("formatted Data: ", formattedData);
-  console.log("Data: ", data);
-  console.log("relatedData: ", relatedData);
+  // console.log("formatted Data: ", formattedData);
+  // console.log("Data: ", data);
+  // console.log("relatedData: ", relatedData);
 
   const [selectedExamId, setSelectedExamId] = useState(data?.examId || "");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(
@@ -89,24 +89,6 @@ const ResultForm = ({
     relatedData?.studentsByExam,
     relatedData?.studentsByAssignment,
   ]);
-
-  // useEffect(() => {
-  //   if (selectedExamId && relatedData?.studentsByExam) {
-  //     const selectedExamStudents = relatedData.studentsByExam.find(
-  //       (mapping: { examId: number }) =>
-  //         mapping.examId === Number(selectedExamId)
-  //     );
-  //     setFilteredStudents(selectedExamStudents?.students || []);
-  //   } else if (selectedAssignmentId && relatedData?.studentsByAssignment) {
-  //     const selectedAssignmentStudents = relatedData.studentsByAssignment.find(
-  //       (mapping: { assignmentId: number }) =>
-  //         mapping.assignmentId === Number(selectedAssignmentId)
-  //     );
-  //     setFilteredStudents(selectedAssignmentStudents?.students || []);
-  //   } else {
-  //     setFilteredStudents(relatedData?.students || []); // Fallback to all students
-  //   }
-  // }, [selectedExamId, selectedAssignmentId, relatedData]);
 
   useEffect(() => {
     if (selectedExamId && relatedData?.studentsByExam) {
@@ -224,13 +206,13 @@ const ResultForm = ({
         <div className="flex flex-col gap-2">
           <label className="text-sm text-gray-500">Student</label>
           {formattedData ? (
-                  <p>
-                    Existing Student: {formattedData.studentFirstName}{" "}
-                    {formattedData.studentLastName}
-                  </p>
-                ) : (
-                  <p>No student selected</p>
-                )}
+            <p>
+              Existing Student: {formattedData.studentFirstName}{" "}
+              {formattedData.studentLastName}
+            </p>
+          ) : (
+            <p>No student selected</p>
+          )}
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("studentId")}
@@ -246,7 +228,6 @@ const ResultForm = ({
             ) : (
               <option value="" disabled>
                 No student selected
-                
               </option>
             )}
           </select>

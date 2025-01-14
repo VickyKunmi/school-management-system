@@ -1,19 +1,21 @@
 import FormContainer from "@/components/FormContainer";
-import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { examsData, leaveRequestData, role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
-import { Leave, Prisma, Teacher } from "@prisma/client";
+import { Attendance, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import React from "react";
 
-type LeaveLists = Leave & { teacher: Teacher };
+type PresencelogLists = Attendance & { 
+    student: { firstName: string; lastName: string }; // Student info
+    lesson: { name: string }; // Lesson info
+ };
 
-const LeaveList = async ({
+const PresencelogList = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
@@ -22,42 +24,25 @@ const LeaveList = async ({
   const { userId, sessionClaims } = authObject;
   const currentUserId = userId;
   const role = (sessionClaims?.metadata as { role?: string })?.role;
-
   const columns = [
-    ...(role === "admin"
-      ? [
-          {
-            header: "Name",
-            accessor: "teacher",
-            render: (row: LeaveLists) =>
-              `${row.teacher.firstName} ${row.teacher.lastName}`,
-          },
-        ]
-      : []),
+   
     {
-      header: "Applied Date",
-      accessor: "appliedDate",
+      header: "Date",
+      accessor: "date",
     },
     {
-      header: "Start Date",
-      accessor: "End Date",
+      header: "Student name",
+      accessor: "student",
     },
     {
-      header: "End Date",
-      accessor: "endDate",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: " Leave Type",
-      accessor: "type",
-      className: "hidden md:table-cell",
+      header: "Lesson",
+      accessor: "lesson",
     },
     {
       header: "Status",
       accessor: "status",
     },
-
-    ...(role === "admin"
+    ...(role === "teacher"
       ? [
           {
             header: "Actions",
@@ -67,46 +52,36 @@ const LeaveList = async ({
       : []),
   ];
 
-  const renderRow = (item: LeaveLists) => (
+  const renderRow = (item: PresencelogLists) => (
+    
+    
     <tr
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
     >
-      {role === "admin" && (
-        <td >
-          {item.teacher.firstName} {item.teacher.lastName}
-        </td>
-      )}
-      <td className="flex items-center gap-4 p-4">
-        {" "}
-        {new Date(item.createdAt).toLocaleDateString()}{" "}
-      </td>
-      <td>{new Date(item.startDate).toLocaleDateString()}</td>
-      <td className="hidden md:table-cell">
-        {new Date(item.endDate).toLocaleDateString()}{" "}
-      </td>
-      <td className="hidden md:table-cell">{item.type}</td>
-      <td className="hidden md:table-cell">{item.status}</td>
+      
+      <td>{new Date(item.date).toLocaleDateString()}</td>
+      <td>{item.student.firstName} {item.student.lastName}</td>
+      <td>{item.lesson.name}</td>
+      <td>{item.status}</td>
 
       <td>
         <div className="flex items-center gap-2">
           <Link href={`/list/teacher/${item.id}`}></Link>
-          {role === "admin" && (
-            <FormContainer type="update" table="leave" data={item} />
-          )}
-          {role === "admin" && (
-            <FormContainer type="delete" table="leave" id={item.id} />
+          {role === "teacher" && (
+            <>
+              <FormContainer type="update" table="presencelog" data={item} />
+              <FormContainer type="delete" table="presencelog" id={item.id} />
+            </>
           )}
         </div>
       </td>
     </tr>
   );
-
   const { page, ...queryParams } = searchParams;
 
   const p = page ? parseInt(page) : 1;
-
-  const query: Prisma.LeaveWhereInput = {};
+  const query: Prisma.AttendanceWhereInput = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -115,57 +90,75 @@ const LeaveList = async ({
           case "search":
             query.OR = [
               {
-                teacher: {
+                student: {
                   firstName: { contains: value, mode: "insensitive" },
+
                   lastName: { contains: value, mode: "insensitive" },
                 },
               },
+              { lesson: { name: { contains: value, mode: "insensitive" } } },
             ];
             break;
           default:
             break;
         }
-
-        
       }
     }
   }
 
 
-        switch (role) {
-          case "admin":
-            break;
-          case "teacher":
-            query.teacher = { id: currentUserId! };
-            break;
-          default:
-            break;
-        }
+  // role condition
 
-        const [data, count] = await prisma.$transaction([
-          prisma.leave.findMany({
-            where: query,
-            include: {
-              teacher: {
-                select: { id: true, firstName: true, lastName: true },
-              },
-            },
-            take: ITEM_PER_PAGE,
-            skip: ITEM_PER_PAGE * (p-1)
-          }),
-          prisma.leave.count({
-            where: query,
-          })
-        ]);
-      
+
+  switch(role) {
+    case "admin": 
+    break;
+    case "teacher": 
+    query.OR = [
+        {lesson: {teacherId: currentUserId!}}
+    ];
+    break;
+    case "student": 
+    query.studentId = currentUserId!;
+    break;
+
+    case "parent": 
+    query.student = {
+        parentId: currentUserId!,
+    }
+    break;
+    default:
+    break;
+  }
+
+  const [data, count] = await prisma.$transaction([
+    prisma.attendance.findMany({
+      where: query,
+      include: {
+        student: {
+          select: { id: true, firstName: true, lastName: true },
+        },
+        lesson: {
+          select: { id: true, name: true },
+        },
+      },
+
+      take: ITEM_PER_PAGE,
+      skip: ITEM_PER_PAGE * (p - 1),
+    }),
+    prisma.attendance.count({
+      where: query,
+    }),
+  ]);
+
+
   
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
       <div className="flex items-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          All Leave Request
+          All Presence Logs
         </h1>
         <div className="flex flex-col md:flex-row items-center gap-4  w-full md:w-auto">
           <TableSearch />
@@ -177,18 +170,16 @@ const LeaveList = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {role === "teacher" && (
-              <FormContainer type="create" table="leave" />
+              <FormContainer type="create" table="presencelog" />
             )}
           </div>
         </div>
       </div>
-
-      {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      {/* PAGINATION */}
+
       <Pagination page={p} count={count} />
     </div>
   );
 };
 
-export default LeaveList;
+export default PresencelogList;
