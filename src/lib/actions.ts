@@ -16,6 +16,7 @@ import {
   ExeatSchema,
   EventSchema,
   AnnouncementSchema,
+  GradeSchema,
 } from "./formValidationSchema";
 import prisma from "./prisma";
 import { clerkClient, auth } from "@clerk/nextjs/server";
@@ -145,6 +146,75 @@ export const deleteClass = async (
     return { success: false, error: true };
   }
 };
+
+
+
+
+
+export const createGrade = async (
+  currentState: CurrentState,
+  data: GradeSchema
+) => {
+  try {
+    await prisma.grade.create({
+      data,
+    });
+
+    // revalidatePath("/list/subject");
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+export const updateGrade = async (
+  currentState: CurrentState,
+  data: GradeSchema
+) => {
+  try {
+    await prisma.grade.update({
+      where: {
+        id: data.id,
+      },
+      data,
+    });
+
+    // revalidatePath("/list/subject");
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+export const deleteGrade = async (
+  currentState: CurrentState,
+  data: FormData
+) => {
+  const id = data.get("id") as string;
+  try {
+    await prisma.grade.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    // revalidatePath("/list/subject");
+    return { success: true, error: false };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: true };
+  }
+};
+
+
+
+
+
+
+
+
 
 export const createTeacher = async (
   currentState: CurrentState,

@@ -40,6 +40,7 @@ const deleteActionMap = {
   presencelog: deletePresencelog,
   leave: deleteLeave,
   exeat: deleteExeat,
+  grade: deleteExeat,
 };
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
   loading: () => <h1>Loading...</h1>,
@@ -54,6 +55,10 @@ const ParentForm = dynamic(() => import("./forms/ParentForm"), {
 });
 
 const ClassForm = dynamic(() => import("./forms/ClassForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+
+const GradeForm = dynamic(() => import("./forms/GradeForm"), {
   loading: () => <h1>Loading...</h1>,
 });
 
@@ -137,6 +142,17 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+
+  grade: (setOpen, type, data, relatedData) => (
+    <GradeForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
+  ),
+
+
   subject: (setOpen, type, data, relatedData) => (
     <SubjectForm
       type={type}

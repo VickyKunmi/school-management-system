@@ -40,6 +40,12 @@ const menuItems = [
       },
       {
         icon: "/class.png",
+        label: "Grade",
+        href: "/list/grades",
+        visible: ["admin"],
+      },
+      {
+        icon: "/class.png",
         label: "Classes",
         href: "/list/classes",
         visible: ["admin", "teacher"],

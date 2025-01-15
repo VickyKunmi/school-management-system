@@ -18,6 +18,7 @@ export type FormContainerProps = {
     | "announcement"
     | "presencelog"
     | "leave"
+    | "grade"
     | "exeat";
 
   type: "create" | "update" | "delete" | "message";
