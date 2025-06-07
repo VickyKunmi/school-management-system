@@ -1,7 +1,7 @@
 import Image from "next/image";
 // import Calendar from "react-calendar";
 // import "react-calendar/dist/Calendar.css";
-import EventList from "./EventList";
+// import EventList from "./EventList";
 import EventCalendar from "./EventCalendar";
 
 const EventCalendarContainer = async ({
@@ -22,7 +22,7 @@ const EventCalendarContainer = async ({
       </div>
 
       <div className="flex flex-col gap-4">
-        <EventList dateParam={date} />
+        {/* <EventList dateParam={date} /> */}
       </div>
     </div>
   );
