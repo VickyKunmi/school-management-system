@@ -5,10 +5,15 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
-import { Prisma, Subject, Teacher } from "@prisma/client";
+import { Prisma, Subject } from "@prisma/client";
 import Image from "next/image";
 
-type SubjectLists = Subject & { teachers: Teacher[] };
+// type SubjectLists = Subject & { teachers: Teacher[] };
+type SubjectLists = Subject & { 
+  grades: { id: number; level: string }[];
+  classes: { id: number; name: string }[];
+};
+
 
 const SubjectList = async ({
   searchParams,
@@ -23,8 +28,13 @@ const SubjectList = async ({
       accessor: "name",
     },
     {
-      header: "Teachers",
-      accessor: "teachers",
+      header: "Grade",
+      accessor: "grade",
+      className: "hidden md:table-cell",
+    },
+    {
+      header: "Class",
+      accessor: "class",
       className: "hidden md:table-cell",
     },
 
@@ -34,6 +44,8 @@ const SubjectList = async ({
     },
   ];
 
+
+
   const renderRow = (item: SubjectLists) => (
     <tr
       key={item.id}
@@ -41,15 +53,11 @@ const SubjectList = async ({
     >
       <td className="flex items-center gap-4 p-4">{item.name}</td>
       <td className="hidden md:table-cell">
-        {item.teachers
-          .map(
-            (teacher) =>
-              `${teacher.firstName}
-               ${teacher.lastName}`
-          )
-          .join(", ")}
+        {item.grades.map((grade) => grade.level).join(", ")}
       </td>
-
+      <td className="hidden md:table-cell">
+        {item.classes.map((classItem) => classItem.name).join(", ")}
+      </td>
       <td>
         <div className="flex items-center gap-2">
           {role === "admin" && (
@@ -63,6 +71,10 @@ const SubjectList = async ({
     </tr>
   );
 
+  
+
+
+  
   const { page, ...queryParams } = searchParams;
 
   const p = page ? parseInt(page) : 1;
@@ -86,19 +98,42 @@ const SubjectList = async ({
     }
   }
 
+  // const [data, count] = await prisma.$transaction([
+  //   prisma.subject.findMany({
+  //     where: query,
+      
+  //     take: ITEM_PER_PAGE,
+  //     skip: ITEM_PER_PAGE * (p - 1),
+  //     include: {
+  //       grades: true,
+  //       classes: true,
+  //     }
+  //   }),
+  //   prisma.subject.count({
+  //     where: query,
+  //   }),
+  // ]);
+
+
+
   const [data, count] = await prisma.$transaction([
+    
     prisma.subject.findMany({
       where: query,
-      include: {
-        teachers: true,
-      },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
+      include: {
+        grades: true,
+        classes: true,
+      }
     }),
     prisma.subject.count({
       where: query,
     }),
   ]);
+
+
+
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">

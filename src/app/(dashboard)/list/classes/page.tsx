@@ -6,10 +6,10 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
-import { Class, Prisma, Teacher } from "@prisma/client";
+import { Class, Prisma } from "@prisma/client";
 import Image from "next/image";
 
-type ClassLists = Class & { supervisor: Teacher };
+type ClassLists = Class;
 const ClassesList = async ({
   searchParams,
 }: {
@@ -33,11 +33,7 @@ const ClassesList = async ({
       accessor: "grade",
       className: "hidden md:table-cell",
     },
-    {
-      header: "Supervisor",
-      accessor: "supervisor",
-      className: "hidden md:table-cell",
-    },
+    
 
     ...(role === "admin"
       ? [
@@ -56,12 +52,7 @@ const ClassesList = async ({
     >
       <td className="flex items-center gap-4 p-4">{item.name}</td>
       <td className="hidden md:table-cell">{item.capacity}</td>
-      {/* <td className="hidden md:table-cell">{item.name[0]}</td> */}
       <td className="hidden md:table-cell">{item.gradeId}</td>
-      <td className="hidden md:table-cell">
-        {item.supervisor.firstName + " " + item.supervisor.lastName}
-      </td>
-
       <td>
         <div className="flex items-center gap-2">
           {role === "admin" && (
@@ -87,10 +78,7 @@ const ClassesList = async ({
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch (key) {
-          case "supervisorId":
-            query.supervisorId = value;
-
-            break;
+         
 
           case "search":
             query.name = { contains: value, mode: "insensitive" };
@@ -107,9 +95,6 @@ const ClassesList = async ({
   const [data, count] = await prisma.$transaction([
     prisma.class.findMany({
       where: query,
-      include: {
-        supervisor: true,
-      },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),

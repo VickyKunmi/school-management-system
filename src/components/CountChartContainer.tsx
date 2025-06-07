@@ -3,7 +3,7 @@ import CountChart from "./CountChart";
 import prisma from "@/lib/prisma";
 
 const CountChartContainer = async () => {
-  const data = await prisma.student.groupBy({
+  const data = await prisma.admission.groupBy({
     by: ["sex"],
     _count: true,
   });

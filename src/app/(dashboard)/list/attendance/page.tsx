@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +7,6 @@ import Table from "@/components/Table";
 
 import { fetchTeacherAndAttendance } from "@/lib/actions";
 import { useAuth } from "@clerk/nextjs";
-import { TeacherAttendance } from "@prisma/client";
 
 type Attendance = {
   id: string;
@@ -18,12 +16,10 @@ type Attendance = {
   signInTime: Date;
   signOutTime: Date | null;
   status: string;
-  teacher: {firstName: string; lastName: string}
+  employee: { firstName: string; lastName: string };
 };
 
 // type AttendanceList = TeacherAttendance & {teacher: Teacher}
-
-
 
 type Teacher = {
   id: string;
@@ -33,63 +29,78 @@ type Teacher = {
   img: string;
 };
 
-
-
 const Attendance = () => {
   const { userId, isSignedIn, isLoaded } = useAuth();
   const [qrCode, setQrCode] = useState("");
-  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [employee, setEmployee] = useState<Teacher | null>(null);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | undefined>(undefined);
 
+
+
+
+
   useEffect(() => {
-    console.log("User ID:", userId);
-    console.log("Role from Session:", role);
-  
-    // Ensure the user is authenticated and data is loaded
-    if (!isLoaded) {
-      return; // Wait for user to be loaded
-    }
-  
+    if (!isLoaded) return; // Wait until auth state is loaded
     if (!userId) {
       setError("User is not authenticated");
       return;
     }
   
+  
+
+
     const fetchData = async () => {
+      console.log("role:", role);
+
       try {
-        const { teacher, attendanceData, role } = await fetchTeacherAndAttendance(userId);
-        console.log("Fetched data:", { teacher, attendanceData, role });
+        const data = await fetchTeacherAndAttendance(userId);
+        
+        if (!data) {
+          setError("No attendance records found.");
+          return;
+        }
+        
+        const { employee, attendanceData, role } = data;
+        console.log("Fetched data:", { employee, attendanceData, role });
     
-        // If the role is "teacher", directly set the teacher object
-        if (role === "teacher") {
-          setTeacher(teacher); // teacher is a single object
+        if (role === "staff") {
+          setEmployee(employee);
         } else if (role === "admin") {
-          // For the "admin" role, teacher will be an array, set the first teacher or null
-          setTeacher(teacher ? teacher : null); // If teacher is found, set it, else set null
+          setEmployee(employee ? employee : null);
         } else {
           setError("Admins cannot access this page.");
+          return;
         }
     
         setAttendanceData(attendanceData);
-        setRole(role)
+        setRole(role);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("An error occurred while fetching the data.");
       }
     };
     
-  
+
     fetchData();
-  }, [userId, isLoaded, role]);  // Re-run effect when userId or isLoaded changes
-  
+
+
+  }, [userId, isLoaded, role]);
   
 
+  console.log("attendanceData:", attendanceData);
+console.log("employee:", employee);
+console.log("role:", role);
+
+
+
+
+  
   const generateQRCode = async (
     type: "signIn" | "signOut",
-    teacherId: string
+    employeeId: string
   ) => {
     try {
       setLoading(true);
@@ -97,7 +108,7 @@ const Attendance = () => {
 
       const qrData = JSON.stringify({
         type,
-        teacherId,
+        employeeId,
         timestamp: new Date().toISOString(),
         uniqueId: crypto.randomUUID(),
       });
@@ -116,17 +127,17 @@ const Attendance = () => {
     const signInTime = new Date(item.signInTime);
     const signOutTime = item.signOutTime ? new Date(item.signOutTime) : null;
 
-    
-
     return (
       <tr
         key={item.id}
         className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
       >
-          {role !== "teacher" && (
-          <td className="p-4">{item.teacher.firstName} {item.teacher.lastName}</td>
+        {role !== "staff" && (
+          <td className="p-4">
+            {item.employee.firstName} {item.employee.lastName}
+          </td>
         )}
-         {/* <td className="p-4">{item.teacher.firstName} {item.teacher.lastName}</td> */}
+        {/* <td className="p-4">{item.teacher.firstName} {item.teacher.lastName}</td> */}
         <td className="">{date.toLocaleDateString()}</td>
         <td>{signInTime.toLocaleTimeString()}</td>
         <td className="hidden md:table-cell">
@@ -137,9 +148,6 @@ const Attendance = () => {
     );
   };
 
-
-  
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -148,15 +156,17 @@ const Attendance = () => {
     return <div>Error: {error}</div>;
   }
 
-
   const columns = [
-    ...(role !== "teacher" ? [
-      {
-        header: "Teacher Name",
-        accessor: "teacherName",
-        render: (teacher: { firstName: string; lastName: string }) => `${teacher.firstName} ${teacher.lastName}`,
-      }
-    ] : []),
+    ...(role !== "staff"
+      ? [
+          {
+            header: "Staff Name",
+            accessor: "staffName",
+            render: (employee: { firstName: string; lastName: string }) =>
+              `${employee.firstName} ${employee.lastName}`,
+          },
+        ]
+      : []),
     {
       header: "Date",
       accessor: "date",
@@ -176,20 +186,18 @@ const Attendance = () => {
     },
   ];
 
-
-  
   return (
     <div className="p-4">
-      {role === "teacher" && (
+      {role === "staff" && (
         <div className="flex gap-5 items-center justify-between">
           <button
-            onClick={() => generateQRCode("signIn", teacher?.id!)}
+            onClick={() => generateQRCode("signIn", employee?.id!)}
             className="bg-amber-500 text-white p-2 rounded-md"
           >
             Sign In Code
           </button>
           <button
-            onClick={() => generateQRCode("signOut", teacher?.id!)}
+            onClick={() => generateQRCode("signOut", employee?.id!)}
             className="bg-deepGreen text-white p-2 rounded-md"
           >
             Sign Out Code
@@ -205,9 +213,16 @@ const Attendance = () => {
 
       <div className="mt-4">
         <Table columns={columns} renderRow={renderRow} data={attendanceData} />
+        {attendanceData.length === 0 && (
+          <div className="text-center text-gray-500 mt-4">
+            No attendance records available.
+          </div>
+        )}
       </div>
     </div>
   );
+
+
 };
 
 export default Attendance;

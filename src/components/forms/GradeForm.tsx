@@ -21,7 +21,7 @@ const GradeForm = ({
   setOpen,
   relatedData,
 }: {
-  type: "create" | "update";
+  type: "create" | "update" | "view";
   data?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;

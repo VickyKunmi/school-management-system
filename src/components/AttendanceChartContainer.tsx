@@ -10,7 +10,7 @@ const AttendanceChartContainer = async () => {
   const lastMonday = new Date(today);
   lastMonday.setDate(today.getDate() - daysSinceMonday);
 
-  const resData = await prisma.attendance.findMany({
+  const resData = await prisma.teacherAttendance.findMany({
     where: {
       date: {
         gte: lastMonday,

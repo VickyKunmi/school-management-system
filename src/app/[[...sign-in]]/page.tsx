@@ -22,7 +22,7 @@ const LoginPage = () => {
         router.push(`/${role}`);
       } else {
         console.error("Role not defined for user!");
-        router.push("/error"); // Redirect to a generic error or default page
+        router.push("/error"); 
       }
     }
   }, [isLoaded, user, router]);
@@ -97,41 +97,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
-// "use client";
-
-// import { useSignIn } from "@clerk/nextjs";
-// import React from "react";
-
-// const LoginPage = () => {
-//   const { signIn, isLoaded } = useSignIn();
-
-//   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-//     e.preventDefault();
-
-//     // Access form data
-//     const form = e.currentTarget;
-//     const username = form.username.value;
-//     const password = form.password.value;
-
-//     if (isLoaded) {
-//       try {
-//         await signIn.create({ identifier: username, password });
-//         alert("Signed in successfully!");
-//       } catch (error) {
-//         console.error("Login failed", error);
-//         alert("Login failed. Please check your credentials.");
-//       }
-//     }
-//   };
-
-//   return (
-//     <form onSubmit={handleLogin} className="p-4">
-//       <input type="text" name="username" placeholder="Username" required />
-//       <input type="password" name="password" placeholder="Password" required />
-//       <button type="submit">Sign In</button>
-//     </form>
-//   );
-// };
-
-// export default LoginPage;

@@ -27,13 +27,13 @@ const Attendance = () => {
   const [scanningInProgress, setScanningInProgress] = useState(false);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]); // Default to today's date
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]); 
   const [attendanceData, setAttendanceData] = useState({
-    teacherId: "",
-    date: new Date().toISOString().split("T")[0], // Still in ISO format, which is fine for date input
-    startTime: new Date(), // Use a Date object for startTime
-    endTime: new Date(), // Use a Date object for endTime
-    signInTime: new Date(), // Use a Date object for signInTime
+    employeeId: "",
+    date: new Date().toISOString().split("T")[0], 
+    startTime: new Date(), 
+    endTime: new Date(), 
+    signInTime: new Date(), 
     signOutTime: null,
     status: "Absent" as "Present" | "Absent",
     qrCode: "",
@@ -199,7 +199,7 @@ const Attendance = () => {
 
         // Prepare the attendance data
         const attendanceData = {
-          teacherId: result.data.id,
+          employeeId: result.data.id,
           date: new Date(date),
           startTime: new Date(`${date}T${startTime}`),
           endTime: new Date(`${date}T${endTime}`),

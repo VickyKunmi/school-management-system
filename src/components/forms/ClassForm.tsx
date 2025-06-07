@@ -9,10 +9,7 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 import { createClass, updateClass } from "@/lib/actions";
 import { useFormState } from "react-dom";
 import { useRouter } from "next/navigation";
-import {
-  classSchema,
-  ClassSchema,
-} from "@/lib/formValidationSchema";
+import { classSchema, ClassSchema } from "@/lib/formValidationSchema";
 import { toast } from "react-toastify";
 
 const ClassForm = ({
@@ -21,7 +18,7 @@ const ClassForm = ({
   setOpen,
   relatedData,
 }: {
-  type: "create" | "update";
+  type: "create" | "update" | "view";
   data?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
@@ -58,7 +55,7 @@ const ClassForm = ({
   }, [state, type, router, setOpen]);
 
   // const { teachers } = relatedData;
-  const { teachers, grades } = relatedData;
+  const { grades } = relatedData;
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -94,8 +91,6 @@ const ClassForm = ({
         )}
 
         
-        
-
 
         <div className="flex flex-col gap-2 w-full md:w-2/3">
           <label className="text-sm text-gray-500">Grade</label>
@@ -104,6 +99,7 @@ const ClassForm = ({
             {...register("gradeId")}
             defaultValue={data?.gradeId}
           >
+            <option value="">Select Class</option>
             {grades.map((grade: { id: number; level: number }) => (
               <option
                 value={grade.id}

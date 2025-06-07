@@ -5,125 +5,112 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { auth } from "@clerk/nextjs/server";
-import { Class, Prisma, Student } from "@prisma/client";
+import { Class, Prisma, Admission } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-type StudentLists = Student & { class: Class };
+// type StudentLists = Admission & { class: Class };
+type StudentLists = Admission & {
+  class: Class;
+  enrollments: { status: string; academicYear: string; term: string }[];
+};
+
 
 const StudentList = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  
-  
   const { sessionClaims } = await auth();
   const role = (sessionClaims?.metadata as { role?: string })?.role;
-  
-  const columns = [
-    {
-      header: "Info",
-      accessor: "info",
-    },
-    {
-      header: "Student ID",
-      accessor: "studentId",
-      className: "hidden md:table-cell",
-    },
-  
-    {
-      header: "Grade",
-      accessor: "grades",
-      className: "hidden md:table-cell",
-    },
-    
-    {
-      header: "Address",
-      accessor: "address",
-      className: "hidden lg:table-cell",
-    },
-    ...(role === "admin"
-      ? [
-          {
-            header: "Actions",
-            accessor: "action",
-          },
-        ]
-      : []),
-  ];
-  
-  const renderRow = (item: StudentLists) => (
-    <tr
-      key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-    >
-      <td className="flex items-center gap-4 p-4">
-        <Image
-          src={item.img}
-          alt=""
-          width={40}
-          height={40}
-          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-        />
-        <div className="flex flex-col">
-          <h3 className="font-semibold">
-            {`${item.firstName}  ${
-              item.lastName
-            }`}
-          </h3>
-          <p className="text-xs text-gray-500">{item.class.name} </p>
-        </div>
-      </td>
-      <td className="hidden md:table-cell">{item.username} </td>
-      <td className="hidden md:table-cell">{item.class.name[0]} </td>
-      
-      <td className="hidden md:table-cell">{item.address} </td>
-      <td>
-        <div className="flex items-center gap-2">
-          <Link href={`/list/students/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-yellow">
-              <Image src="/view.png" alt="" width={16} height={16} />
-            </button>
-          </Link>
-          {role === "admin" && (
-            <FormContainer type="delete" table="student" id={item.id} />
-          )}
-        </div>
-      </td>
-    </tr>
-  );
 
+  // Fetch the current academic year and term
+  const currentSettings = await prisma.settings.findFirst({
+    orderBy: { updatedAt: "desc" }, // Get the latest settings
+  });
+
+  const currentAcademicYear = currentSettings?.academicYear;
+  const currentTerm = currentSettings?.term;
+
+  const columns = [
+    { header: "Image", accessor: "img" },
+    { header: "Admission NO", accessor: "admissionNumber" },
+    { header: "Name", accessor: "name", className: "hidden md:table-cell" },
+    {
+      header: "Parent Contact",
+      accessor: "parentContact",
+      className: "hidden md:table-cell",
+    },
+    { header: "Status", accessor: "status", className: "hidden lg:table-cell" },
+    ...(role === "admin" ? [{ header: "Actions", accessor: "action" }] : []),
+  ];
+
+  const renderRow = (item: StudentLists) => {
+    // Default status
+    let status = "Unenrolled";
+
+    // Find enrollment matching current academic year and term
+    const currentEnrollment = item.enrollments.find(
+      (enrollment) =>
+        enrollment.academicYear === currentAcademicYear &&
+        enrollment.term === currentTerm
+    );
+
+    if (currentEnrollment) {
+      status = currentEnrollment.status;
+    }
+
+    return (
+      <tr
+        key={item.id}
+        className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+      >
+        <td className="flex items-center gap-4 p-4">
+          <Image
+            src={item.img}
+            alt=""
+            width={40}
+            height={40}
+            className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+          />
+        </td>
+        <td className="hidden md:table-cell">{item.admissionNumber}</td>
+        <td>
+          <div className="flex flex-col">
+            <h3 className="font-semibold">{`${item.firstName} ${
+              item.middleName || ""
+            } ${item.lastName}`}</h3>
+          </div>
+        </td>
+        <td className="hidden md:table-cell">{item.parentContact}</td>
+        <td className="hidden md:table-cell">{status}</td>{" "}
+        {/* Updated status */}
+        <td>
+          <div className="flex items-center gap-2">
+            {role === "admin" && (
+              <FormContainer type="update" table="admission" data={item} />
+            )}
+            {role === "admin" && (
+              <FormContainer type="delete" table="admission" id={item.id} />
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
 
-  // URL PARAMS CONDITION
-
-  const query: Prisma.StudentWhereInput = {};
+  const query: Prisma.AdmissionWhereInput = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
-
         switch (key) {
-          case "teacherId":
-            {
-              query.class = {
-                lessons: {
-                  some: {
-                    teacherId: value,
-                  },
-                },
-              };
-              break;
-              
-            }
           case "search": {
             query.OR = [
               { firstName: { contains: value, mode: "insensitive" } },
-             
               { lastName: { contains: value, mode: "insensitive" } },
             ];
             break;
@@ -136,24 +123,30 @@ const StudentList = async ({
   }
 
   const [data, count] = await prisma.$transaction([
-    prisma.student.findMany({
+    prisma.admission.findMany({
       where: query,
       include: {
-        class: true,
+        enrollments: {
+          select: {
+            status: true,
+            academicYear: true,
+            term: true,
+          },
+        },
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
-    prisma.student.count({
-      where: query,
-    }),
+
+    prisma.admission.count({ where: query }),
   ]);
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
       <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Students</h1>
+        <h1 className="hidden md:block text-lg font-semibold">
+          All Admitted Students
+        </h1>
         <div className="flex flex-col md:flex-row items-center gap-4  w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
@@ -163,14 +156,14 @@ const StudentList = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lightGreen">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormContainer type="create" table="student" />}
+            {role === "admin" && (
+              <FormContainer type="create" table="admission" />
+            )}
           </div>
         </div>
       </div>
 
-      {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      {/* PAGINATION */}
       <Pagination page={p} count={count} />
     </div>
   );

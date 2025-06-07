@@ -1,20 +1,12 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useFormState } from "react-dom";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InputField from "../InputField";
+import { useFormState } from "react-dom";
 import { resultSchema, ResultSchema } from "@/lib/formValidationSchema";
-import { createResult, updateResult } from "@/lib/actions";
+import { createResult, getSettings, updateResult } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-
-type Student = {
-  // id: string;
-  studentId: string;
-  firstName: string;
-  lastName: string;
-  classId: number;
-};
 
 const ResultForm = ({
   type,
@@ -22,50 +14,48 @@ const ResultForm = ({
   setOpen,
   relatedData,
 }: {
-  type: "create" | "update";
+  type: "create" | "update" | "view";
   data?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
 }) => {
-  const formattedData = data
-    ? {
-        ...data,
-        examId:
-          data.examId ||
-          relatedData?.exams?.find(
-            (exam: { title: string }) => exam.title === data.title
-          )?.id ||
-          "",
-        assignmentId:
-          data.assignmentId ||
-          relatedData?.assignments?.find(
-            (assignment: { title: string }) => assignment.title === data.title
-          )?.id ||
-          "",
-        studentId: data.studentId,
-      }
-    : {};
-
-  // console.log("formatted Data: ", formattedData);
-  // console.log("Data: ", data);
-  // console.log("relatedData: ", relatedData);
-
-  const [selectedExamId, setSelectedExamId] = useState(data?.examId || "");
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState(
-    data?.assignmentId || ""
-  );
-
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const defaultResults =
+    relatedData?.subjects && relatedData.subjects.length > 0
+      ? relatedData.subjects.map((subject: { id: number; name: string }) => ({
+          subjectId: subject.id,
+          score:
+            data?.results?.find(
+              (r: { subjectId: number }) => r.subjectId === subject.id
+            )?.score ?? 0,
+        }))
+      : data?.results || [];
 
   const {
     register,
+    control,
     handleSubmit,
-    formState: { errors },
+    watch,
     setValue,
+    formState: { errors },
   } = useForm<ResultSchema>({
     resolver: zodResolver(resultSchema),
-    defaultValues: formattedData,
+    defaultValues: {
+      // enrollmentId: data?.enrollmemtId,
+      enrollmentId: data?.enrollmentId || data?.id,
+      academicYear: data?.academicYear || "",
+      term: data?.term || "",
+      results: defaultResults,
+    },
   });
+
+  // useFieldArray to manage the results array
+  const { fields } = useFieldArray({
+    name: "results",
+    control,
+  });
+
+  const [academicYear, setAcademicYear] = useState("");
+  const [term, setTerm] = useState("");
 
   const [state, formAction] = useFormState(
     type === "create" ? createResult : updateResult,
@@ -75,44 +65,35 @@ const ResultForm = ({
     }
   );
 
-  useEffect(() => {
-    if (type === "update" && data) {
-      // Set the default values for examId, assignmentId, and studentId
-      setSelectedExamId(data.examId || "");
-      setSelectedAssignmentId(data.assignmentId || "");
-      // setValue("studentId", data.studentId || "");
-    }
-  }, [
-    type,
-    data,
-    setValue,
-    relatedData?.studentsByExam,
-    relatedData?.studentsByAssignment,
-  ]);
+  console.log("related Data:", relatedData);
 
-  useEffect(() => {
-    if (selectedExamId && relatedData?.studentsByExam) {
-      const selectedExamStudents = relatedData.studentsByExam.find(
-        (mapping: { examId: number }) =>
-          mapping.examId === Number(selectedExamId)
-      );
-      setFilteredStudents(selectedExamStudents?.students || []);
-    } else if (selectedAssignmentId && relatedData?.studentsByAssignment) {
-      const selectedAssignmentStudents = relatedData.studentsByAssignment.find(
-        (mapping: { assignmentId: number }) =>
-          mapping.assignmentId === Number(selectedAssignmentId)
-      );
-      setFilteredStudents(selectedAssignmentStudents?.students || []);
-    } else {
-      setFilteredStudents(relatedData?.students || []); // Fallback to all students
-    }
-  }, [selectedExamId, selectedAssignmentId, relatedData]);
+  const calculateGrade = (score: number): string => {
+    if (score >= 90) return "A+";
+    if (score >= 80) return "A";
+    if (score >= 70) return "B+";
+    if (score >= 60) return "B";
+    if (score >= 50) return "C+";
+    if (score >= 40) return "C";
+    return "F";
+  };
 
   const onSubmit = handleSubmit((data) => {
+    console.log("Final Data to Submit:", data);
     formAction(data);
   });
 
+  // console.log("Final Data to Submit:", data);
+
   const router = useRouter();
+
+
+
+  const subjects =
+  relatedData?.subjects ??
+  (data?.results
+    ? data.results.map((result: any) => result.subject)
+    : []);
+
 
   useEffect(() => {
     if (state.success) {
@@ -122,27 +103,127 @@ const ResultForm = ({
     }
   }, [state, router, type, setOpen]);
 
-  const { exams, assignments } = relatedData;
-  console.log("related student: ", relatedData.students);
+  useEffect(() => {
+    // Fetch the current academic year and term
+    const fetchSettings = async () => {
+      const settings = await getSettings();
+      if (settings) {
+        setAcademicYear(settings.academicYear);
+        setTerm(settings.term);
 
-  const selectedStudent = filteredStudents.find(
-    (student) => student.studentId === formattedData?.studentId
-  );
+        // Set default values in form fields
+        setValue("academicYear", settings.academicYear);
+        setValue("term", settings.term);
+      }
+    };
+
+    fetchSettings();
+  }, [setValue]);
+
+  console.log("Existing Results in Data:", data?.results);
+
+  console.log("Subjects from relatedData:", relatedData?.subjects);
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Create a new result" : "Update the result"}
       </h1>
-      <div className="flex justify-between flex-wrap gap-4">
+
+      {/* Display Subject Table */}
+      <div className="overflow-x-auto">
         <InputField
-          label="Score"
-          name="score"
-          type="number"
-          defaultValue={data?.score}
+          label="enrollment Id"
+          name="enrollmentId"
+          defaultValue={data?.enrollmentId}
           register={register}
-          error={errors?.score}
+          error={errors?.enrollmentId}
+          // hidden
         />
+
+        <InputField
+          label="Academic Year"
+          name="academicYear"
+          defaultValue={data?.academicYear}
+          register={register}
+          error={errors?.academicYear}
+          // hidden
+        />
+
+        <InputField
+          label="Term"
+          name="term"
+          defaultValue={data?.term}
+          register={register}
+          error={errors?.term}
+          // hidden
+        />
+
+        <table className="min-w-full table-auto">
+          <thead>
+            <tr>
+              <th className="px-4 py-2">Subject</th>
+              <th className="px-4 py-2">Score</th>
+              <th className="px-4 py-2">Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fields.length > 0 ? (
+              fields.map((field, index) => {
+                // Find the subject name by subjectId
+
+                const subjectInfo = subjects.find(
+                  (subject: { id: number; name: string }) =>
+                    subject.id === field.subjectId
+                );
+
+                // Debugging to check the subject and field values
+                console.log("Field subjectId:", field.subjectId);
+                console.log("Subject Info:", subjectInfo);
+
+                // Watch the score for each field
+                const watchedScore = watch(
+                  `results.${index}.score`,
+                  field.score
+                );
+
+                return (
+                  <tr key={field.id}>
+                    <td className="px-4 py-2">
+                      {subjectInfo ? subjectInfo.name : "Unknown Subject"}
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        {...register(`results.${index}.score`, {
+                          required: "Score is required!",
+                          valueAsNumber: true,
+                        })}
+                        className="ring-1 ring-gray-300 p-2 rounded-md"
+                      />
+                      {errors.results && errors.results[index]?.score && (
+                        <p className="text-xs text-red-400">
+                          {errors.results[index]?.score?.message}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <p>{calculateGrade(watchedScore)}</p>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={3} className="px-4 py-2 text-center">
+                  No subjects found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
 
         {data && (
           <InputField
@@ -154,93 +235,13 @@ const ResultForm = ({
             hidden
           />
         )}
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-500">Exam</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("examId")}
-            defaultValue={formattedData?.examId || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSelectedExamId(value !== "" ? Number(value) : "");
-            }}
-          >
-            <option value="">Select an Exam</option>
-            {exams?.map((exam: { id: number; title: string }) => (
-              <option key={exam.id} value={exam.id}>
-                {exam.title}
-              </option>
-            ))}
-          </select>
-          {errors.examId?.message && (
-            <p className="text-xs text-red-400">{errors.examId.message}</p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-500">Assignment</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("assignmentId")}
-            defaultValue={formattedData?.assignmentId || ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSelectedAssignmentId(value !== "" ? Number(value) : "");
-            }}
-          >
-            <option value="">Select an Assignment</option>
-            {assignments?.map((assignment: { id: number; title: string }) => (
-              <option key={assignment.id} value={assignment.id}>
-                {assignment.title}
-              </option>
-            ))}
-          </select>
-          {errors.assignmentId?.message && (
-            <p className="text-xs text-red-400">
-              {errors.assignmentId.message}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-500">Student</label>
-          {formattedData ? (
-            <p>
-              Existing Student: {formattedData.studentFirstName}{" "}
-              {formattedData.studentLastName}
-            </p>
-          ) : (
-            <p>No student selected</p>
-          )}
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("studentId")}
-            defaultValue={formattedData?.studentId || ""}
-          >
-            <option value="">Select student</option>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
-                <option key={student.studentId} value={student.studentId}>
-                  {student.firstName} {student.lastName}
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>
-                No student selected
-              </option>
-            )}
-          </select>
-          {errors.studentId?.message && (
-            <p className="text-xs text-red-400">{errors.studentId.message}</p>
-          )}
-        </div>
       </div>
 
+      {/* Submit Button */}
       {state.error && (
         <span className="text-red-500">Something went wrong!</span>
+        
       )}
-
       <button className="bg-deepGreen text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}
       </button>

@@ -16,7 +16,7 @@ const SubjectForm = ({
   setOpen,
   relatedData,
 }: {
-  type: "create" | "update";
+  type: "create" | "update" | "view";
   data?: any;
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
@@ -27,6 +27,12 @@ const SubjectForm = ({
     formState: { errors },
   } = useForm<SubjectSchema>({
     resolver: zodResolver(subjectSchema),
+    defaultValues: {
+      id: data?.id,
+      name: data?.name,
+      grades: data?.grades?.map((grade: { id: number }) => String(grade.id)) || [],
+      classes: data?.classes?.map((cls: { id: number }) => String(cls.id)) || [],
+    },
   });
 
   const [state, formAction] = useFormState(
@@ -36,11 +42,34 @@ const SubjectForm = ({
       error: false,
     }
   );
+  console.log("Form state:", state);
+  console.log("log when updating: ", data);
 
-  const onSubmit = handleSubmit((data) => {
-    // console.log("create: ", data);
-    formAction(data);
+  // const onSubmit = handleSubmit((data) => {
+  //   console.log("create: ", data);
+  //   formAction(data);
+  // });
+
+
+  const onSubmit = handleSubmit((formData) => {
+    // Transform grades: if they're objects, extract their id; if they're strings, leave as-is.
+    const transformedData = {
+      ...formData,
+      id: Number(formData.id), // Ensure id is a number
+      grades: Array.isArray(formData.grades)
+        ? formData.grades.map((g: any) => (typeof g === "object" ? String(g.id) : g))
+        : [],
+      classes: Array.isArray(formData.classes)
+        ? formData.classes.map((c: any) => (typeof c === "object" ? String(c.id) : c))
+        : [],
+    };
+  
+    console.log("Transformed data before update:", transformedData);
+    formAction(transformedData);
   });
+
+  
+
 
   const router = useRouter();
 
@@ -52,9 +81,7 @@ const SubjectForm = ({
     }
   }, [state, type, router, setOpen]);
 
-  // const { teachers } = relatedData;
-  const { teachers } = relatedData;
-  console.log(relatedData, "data")
+  const { classes, allgrade } = relatedData;
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -83,36 +110,72 @@ const SubjectForm = ({
         )}
 
         <div className="flex flex-col gap-2 w-full md:w-2/3">
-          <label className="text-sm text-gray-500">Teachers</label>
+          <label className="text-sm text-gray-500">
+            Grade (hold the ctrl key to select multiple)
+          </label>
           <select
             multiple
+            style={{ cursor: "pointer" }}
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("teachers")}
-            defaultValue={data?.teachers}
+            {...register("grades")}
+            defaultValue={
+              data?.grades?.map((grade: { id: number }) => String(grade.id)) ||
+              []
+            }
           >
-            {teachers.map(
-              (teacher: {
-                id: string;
-                firstName: string;
-
-                lastName: string;
-              }) => (
-                <option value={teacher.id} key={teacher.id}>
-                  {" "}
-                  {teacher.firstName + " " + teacher.lastName}{" "}
-                </option>
-              )
-            )}
+            {allgrade?.map((grade: { id: number; level: number }) => (
+              <option key={grade.id} value={String(grade.id)}>
+                {grade.level}
+              </option>
+            ))}
           </select>
-          {errors.teachers?.message && (
+
+          {errors.grades?.message && (
             <p className="text-xs text-red-400">
-              {errors.teachers.message.toString()}
+              {errors.grades.message.toString()}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 w-full md:w-2/3">
+          <label className="text-sm text-gray-500">
+            Class (hold the ctrl key to select multiple)
+          </label>
+          <select
+            multiple
+            style={{ cursor: "pointer" }}
+            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            {...register("classes")}
+            defaultValue={
+              data?.classes?.map((cls: { id: number }) => String(cls.id)) || []
+            }
+          >
+            {classes?.map((cls: { id: number; name: string }) => (
+              <option key={cls.id} value={cls.id}>
+                {cls.name}
+              </option>
+            ))}
+          </select>
+
+          {errors.classes?.message && (
+            <p className="text-xs text-red-400">
+              {/* {errors.classs.message.toString()} */}
+              {errors.classes && (
+                <p className="text-xs text-red-400">{errors.classes.message}</p>
+              )}
             </p>
           )}
         </div>
       </div>
+
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-red-500">
+          {state.error && (
+            <div className="text-red-500 text-sm">
+              <p>{state.message}</p>
+            </div>
+          )}
+        </span>
       )}
       <button className="bg-deepGreen text-white p-2 rounded-md">
         {type === "create" ? "Create" : "Update"}

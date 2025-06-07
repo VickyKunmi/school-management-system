@@ -10,6 +10,8 @@ type InputFieldProps = {
   hidden?: boolean;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   rightIcon?: React.ReactNode;
+  readOnly?: boolean;
+  value?: string;
 };
 
 const InputField = ({
@@ -22,6 +24,7 @@ const InputField = ({
   hidden,
   inputProps,
   rightIcon,
+  readOnly,
 }: InputFieldProps) => {
   return (
     <div className={hidden ? "hidden" : "flex flex-col gap-2 w-full md:w-1/4"}>
@@ -33,6 +36,7 @@ const InputField = ({
         className="ring-[1.5px] ring-gray-300 p-2  rounded-md text-sm w-full"
         {...inputProps}
         defaultValue={defaultValue}
+        readOnly={readOnly}
       />
       {rightIcon && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer">
