@@ -148,109 +148,49 @@ const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
 
       case "presencelog":
         // Fetch the lessons taught by the current user
-        const teacherLessons = await prisma.lesson.findMany({
-          where: {
-            ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
-          },
-          select: {
-            id: true,
-            name: true,
-            class: {
-              select: {
-                id: true,
-                name: true,
-                students: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    classId: true,
-                  },
-                },
-              },
-            },
-          },
-        });
+        // const teacherLessons = await prisma.lesson.findMany({
+        //   where: {
+        //     ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
+        //   },
+        //   select: {
+        //     id: true,
+        //     name: true,
+        //     class: {
+        //       select: {
+        //         id: true,
+        //         name: true,
+        //         students: {
+        //           select: {
+        //             id: true,
+        //             firstName: true,
+        //             lastName: true,
+        //             classId: true,
+        //           },
+        //         },
+        //       },
+        //     },
+        //   },
+        // });
 
         // Create a mapping between lesson IDs and their related students
-        const lessonStudentMapping = teacherLessons.map((lesson) => ({
-          lessonId: lesson.id,
-          lessonName: lesson.name,
-          students: lesson.class.students.map((student) => ({
-            studentId: student.id,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            classId: student.classId,
-          })),
-        }));
-
-        relatedData = {
-          lessons: teacherLessons,
-          studentsByLesson: lessonStudentMapping,
-        };
-
-        break;
-
-      case "leave":
-        const leaveRequestData = await prisma.teacher.findMany({
-          where: {
-            id: currentUserId!, // Use the current user's ID to filter for the specific teacher
-          },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        });
-
-        // Assuming the current user exists, pass the first (and only) teacher object to relatedData
-        relatedData = {
-          teacher: leaveRequestData[0], // If there's only one teacher, use the first element of the array
-        };
-        break;
-
-      case "exeat":
-        const exeatRequestData = await prisma.student.findMany({
-          where: {
-            id: currentUserId!,
-          },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        });
-
-        relatedData = {
-          student: exeatRequestData[0],
-        };
-        break;
-
-      case "event":
-        // const eventClass = await prisma.class.findMany({
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //   },
-        // });
-
-        relatedData = {
-          // classes: eventClass,
-        };
-        break;
-
-      case "announcement":
-        // const announcementClass = await prisma.class.findMany({
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //   },
-        // });
+        // const lessonStudentMapping = teacherLessons.map((lesson) => ({
+        //   lessonId: lesson.id,
+        //   lessonName: lesson.name,
+        //   students: lesson.class.students.map((student) => ({
+        //     studentId: student.id,
+        //     firstName: student.firstName,
+        //     lastName: student.lastName,
+        //     classId: student.classId,
+        //   })),
+        // }));
 
         // relatedData = {
-        //   classes: announcementClass,
+        //   lessons: teacherLessons,
+        //   studentsByLesson: lessonStudentMapping,
         // };
+
         break;
+
 
       case "admission":
         const notEnrolledStudents = await prisma.admission.findMany({
